@@ -132,7 +132,6 @@ export class EmployeesService {
       availability_unrestricted: payload.availability_mode === 'unrestricted',
       position: payload.employee_positions.find((item) => item.primary)?.position || payload.employee_positions[0]?.position || payload.position || null,
       allowed_zones: payload.zone_mode === 'custom' ? payload.employee_zones.map((item) => item.zone) : [],
-      allowed_shifts: payload.allowed_shifts,
       contract,
       employee_positions: payload.employee_positions,
       employee_zones: payload.zone_mode === 'custom' ? payload.employee_zones : [],

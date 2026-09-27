@@ -9,16 +9,16 @@ export interface Zone {
   active?: boolean;
   created_at?: string;
   updated_at?: string;
-  shift_presets?: ZoneShiftPreset[];
+  staff_requirements?: ZoneStaffRequirementGroup[];
 }
 
-export interface ZoneShiftPreset {
+export interface ZoneStaffRequirementGroup {
   id: string;
   shift: string;
-  positions: ZoneShiftPositionRequirement[];
+  positions: ZonePositionRequirement[];
 }
 
-export interface ZoneShiftPositionRequirement {
+export interface ZonePositionRequirement {
   position: string;
   required_count: number;
 }
@@ -31,10 +31,10 @@ export interface ZoneUpsertPayload {
   color: string;
   sort_order: number;
   active: boolean;
-  shift_presets: ZoneShiftPresetInput[];
+  staff_requirements: ZoneStaffRequirementInput[];
 }
 
-export interface ZoneShiftPresetInput {
+export interface ZoneStaffRequirementInput {
   shift: string;
-  positions: ZoneShiftPositionRequirement[];
+  positions: ZonePositionRequirement[];
 }

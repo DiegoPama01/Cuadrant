@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from workforce.models import Position, Shift, Zone, ZoneShiftPositionRequirement, ZoneShiftPreset
+from workforce.models import Position, Shift, StaffRequirement, Zone
 from organizations.models import Company, Installation
 
 
@@ -49,18 +49,18 @@ class InstallationSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "company", "created_at", "updated_at")
 
 
-class ZoneShiftPositionRequirementInputSerializer(serializers.Serializer):
+class ZonePositionRequirementInputSerializer(serializers.Serializer):
     position = serializers.UUIDField()
     required_count = serializers.IntegerField(min_value=1)
 
 
-class ZoneShiftPresetInputSerializer(serializers.Serializer):
+class ZoneStaffRequirementInputSerializer(serializers.Serializer):
     shift = serializers.UUIDField()
-    positions = ZoneShiftPositionRequirementInputSerializer(many=True, required=False)
+    positions = ZonePositionRequirementInputSerializer(many=True, required=False)
 
 
 class ZoneSerializer(serializers.ModelSerializer):
-    shift_presets = ZoneShiftPresetInputSerializer(many=True, required=False, write_only=True)
+    staff_requirements = ZoneStaffRequirementInputSerializer(many=True, required=False, write_only=True)
     installation = serializers.PrimaryKeyRelatedField(queryset=Installation.objects.none(), required=False)
 
     class Meta:
@@ -76,7 +76,7 @@ class ZoneSerializer(serializers.ModelSerializer):
             "active",
             "created_at",
             "updated_at",
-            "shift_presets",
+            "staff_requirements",
         )
         read_only_fields = ("id", "created_at", "updated_at")
 
@@ -88,62 +88,58 @@ class ZoneSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data["shift_presets"] = [
-            {
-                "id": preset.id,
-                "shift": preset.shift_id,
-                "positions": list(
-                    preset.position_requirements.filter(
-                        company=instance.company,
-                    ).values("position", "required_count")
-                ),
-            }
-            for preset in instance.shift_presets.filter(active=True).prefetch_related("position_requirements")
+        grouped = {}
+        requirements = StaffRequirement.objects.filter(installation=instance.installation, zone=instance, active=True)
+        for requirement in requirements:
+            preset = grouped.setdefault(str(requirement.shift_id), {"shift": str(requirement.shift_id), "positions": {}})
+            existing = preset["positions"].get(str(requirement.position_id))
+            if existing is None or requirement.required_employees > existing["required_count"]:
+                preset["positions"][str(requirement.position_id)] = {
+                    "position": str(requirement.position_id),
+                    "required_count": requirement.required_employees,
+                }
+        data["staff_requirements"] = [
+            {"id": f"{instance.id}:{preset['shift']}", "shift": preset["shift"], "positions": list(preset["positions"].values())}
+            for preset in grouped.values()
         ]
         return data
 
     def create(self, validated_data):
-        shift_presets = validated_data.pop("shift_presets", [])
+        staff_requirements = validated_data.pop("staff_requirements", [])
         instance = super().create(validated_data)
-        self._sync_shifts(instance, shift_presets)
+        self._sync_staff_requirements(instance, staff_requirements)
         return instance
 
     def update(self, instance, validated_data):
-        shift_presets = validated_data.pop("shift_presets", None)
+        staff_requirements = validated_data.pop("staff_requirements", None)
         instance = super().update(instance, validated_data)
-        if shift_presets is not None:
-            self._sync_shifts(instance, shift_presets)
+        if staff_requirements is not None:
+            self._sync_staff_requirements(instance, staff_requirements)
         return instance
 
-    def _sync_shifts(self, zone, shift_presets):
+    def _sync_staff_requirements(self, zone, staff_requirements):
         company = self.context["company"]
-        ZoneShiftPreset.objects.filter(company=company, zone=zone).update(active=False)
-        for item in shift_presets:
+        StaffRequirement.objects.filter(installation=zone.installation, zone=zone, date__isnull=True).delete()
+        for item in staff_requirements:
             shift = serializers.PrimaryKeyRelatedField(
                 queryset=Shift.objects.filter(installation__company=company),
             ).to_internal_value(item["shift"])
             if shift.installation_id != zone.installation_id:
                 raise serializers.ValidationError("All shifts must belong to the zone installation.")
-            preset, _ = ZoneShiftPreset.objects.update_or_create(
-                company=company,
-                zone=zone,
-                shift=shift,
-                defaults={"active": True},
-            )
-            ZoneShiftPositionRequirement.objects.filter(
-                company=company,
-                zone_shift_preset=preset,
-            ).delete()
             for position_item in item.get("positions", []):
                 position = position_item["position"]
                 if not Position.objects.filter(id=position, installation=zone.installation).exists():
                     raise serializers.ValidationError("All positions must belong to the zone installation.")
-                ZoneShiftPositionRequirement.objects.create(
-                    company=company,
-                    zone_shift_preset=preset,
-                    position_id=position,
-                    required_count=position_item.get("required_count", 1),
-                )
+                for day_of_week in range(7):
+                    StaffRequirement.objects.create(
+                        installation=zone.installation,
+                        zone=zone,
+                        shift=shift,
+                        position_id=position,
+                        day_of_week=day_of_week,
+                        required_employees=position_item.get("required_count", 1),
+                        active=True,
+                    )
 
 
 class ShiftSerializer(serializers.ModelSerializer):

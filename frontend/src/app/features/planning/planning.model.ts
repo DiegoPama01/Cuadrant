@@ -110,9 +110,12 @@ export interface Assignment {
   id: string;
   planning?: string | null;
   employee: string;
+  date?: string;
   work_date: string;
   zone: string;
   shift: string;
+  position: string;
+  notes?: string | null;
   note?: string;
   created_at?: string;
   updated_at?: string;
@@ -122,25 +125,23 @@ export type PlanningAssignment = Assignment;
 
 export interface StaffRequirement {
   id: string;
-  planning?: string | null;
-  weekday?: number;
-  work_date?: string | null;
+  installation?: string;
+  day_of_week?: number | null;
+  date?: string | null;
   position: string;
   zone: string;
   shift: string;
-  minimum_count: number;
-  maximum_count: number | null;
+  required_employees: number;
+  minimum_employees?: number | null;
+  notes?: string | null;
   active: boolean;
 }
-
-export type StaffingRequirement = StaffRequirement;
 
 export interface PlanningWeekResponse {
   planning?: Planning | null;
   week_start: string;
   week_end: string;
   assignments: PlanningAssignment[];
-  zone_shift_presets?: ZoneShiftPreset[];
   requirements?: StaffRequirement[];
   staff_requirements?: StaffRequirement[];
   contracts?: Contract[];
@@ -152,7 +153,7 @@ export interface PlanningWeekResponse {
   time_balance_entries?: TimeBalanceEntry[];
 }
 
-export interface ZoneShiftPreset {
+export interface PlanningZoneShift {
   id: string;
   zone: string;
   shift: string;
@@ -164,10 +165,11 @@ export interface PlanningWeekWriteAssignment {
   id?: string;
   planning?: string | null;
   employee: string;
-  work_date: string;
+  date: string;
   zone: string;
   shift: string;
-  note?: string;
+  position: string;
+  notes?: string;
 }
 
 export interface PlanningWeekWritePayload {

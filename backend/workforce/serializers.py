@@ -1,6 +1,7 @@
 import datetime
 
 from django.db import transaction
+from django.db.models import Q
 from rest_framework import serializers
 
 from organizations.models import CompanyMembership, Installation
@@ -14,14 +15,11 @@ from .models import (
     EmployeeTimeOff,
     EmployeeZone,
     Planning,
-    PlanningAssignment,
     Position,
     Shift,
     StaffRequirement,
-    StaffingRequirement,
     TimeBalanceEntry,
     Zone,
-    ZoneShiftPreset,
 )
 
 
@@ -134,11 +132,6 @@ class EmployeeSerializer(serializers.ModelSerializer):
         many=True,
         required=False,
     )
-    allowed_shifts = serializers.PrimaryKeyRelatedField(
-        queryset=Shift.objects.none(),
-        many=True,
-        required=False,
-    )
     contract = EmployeeContractPayloadSerializer(required=False, allow_null=True)
     employee_positions = EmployeePositionPayloadSerializer(many=True, required=False)
     employee_zones = EmployeeZonePayloadSerializer(many=True, required=False)
@@ -168,7 +161,6 @@ class EmployeeSerializer(serializers.ModelSerializer):
             "updated_at",
             "position",
             "allowed_zones",
-            "allowed_shifts",
             "contract",
             "employee_positions",
             "employee_zones",
@@ -189,11 +181,6 @@ class EmployeeSerializer(serializers.ModelSerializer):
                 installation__company=company,
             )
             self.fields["allowed_zones"].child_relation.queryset = Zone.objects.filter(
-                installation__company=company,
-            )
-            self.fields[
-                "allowed_shifts"
-            ].child_relation.queryset = Shift.objects.filter(
                 installation__company=company,
             )
             self.fields["employee_positions"].child.fields["position"].queryset = Position.objects.filter(
@@ -233,10 +220,6 @@ class EmployeeSerializer(serializers.ModelSerializer):
             for zone in attrs.get("allowed_zones", []):
                 if zone.installation_id != installation.id:
                     raise serializers.ValidationError({"allowed_zones": "Zones must belong to the employee installation."})
-
-            for shift in attrs.get("allowed_shifts", []):
-                if shift.installation_id != installation.id:
-                    raise serializers.ValidationError({"allowed_shifts": "Shifts must belong to the employee installation."})
 
         nested_positions = attrs.get("employee_positions")
         if nested_positions is not None:
@@ -339,13 +322,10 @@ class EmployeeSerializer(serializers.ModelSerializer):
         availabilities_data = validated_data.pop("availabilities", None)
         grant_access = validated_data.pop("grant_quadrant_access", False)
         allowed_zones = validated_data.pop("allowed_zones", None)
-        allowed_shifts = validated_data.pop("allowed_shifts", None)
 
         employee = super().create(validated_data)
         if allowed_zones is not None:
             employee.allowed_zones.set(allowed_zones)
-        if allowed_shifts is not None:
-            employee.allowed_shifts.set(allowed_shifts)
         self._sync_contract(employee, contract_data)
         self._sync_positions(employee, positions_data)
         self._sync_zones(employee, zones_data)
@@ -374,73 +354,6 @@ class EmployeeSerializer(serializers.ModelSerializer):
         if grant_access:
             self._grant_quadrant_access(employee)
         return employee
-
-
-class PlanningAssignmentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PlanningAssignment
-        fields = (
-            "id",
-            "employee",
-            "work_date",
-            "zone",
-            "shift",
-            "note",
-        )
-        read_only_fields = ("id",)
-
-
-class ZoneShiftPresetSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ZoneShiftPreset
-        fields = ("id", "zone", "shift", "active", "sort_order")
-        read_only_fields = ("id",)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        company = self.context.get("company")
-        if company:
-            self.fields["zone"].queryset = Zone.objects.filter(installation__company=company)
-            self.fields["shift"].queryset = Shift.objects.filter(installation__company=company)
-
-    def validate(self, attrs):
-        company = self.context["company"]
-        if attrs["zone"].company_id != company.id or attrs["shift"].company_id != company.id:
-            raise serializers.ValidationError("Zone and shift must belong to the active company.")
-        if attrs["zone"].installation_id != attrs["shift"].installation_id:
-            raise serializers.ValidationError("Zone and shift must belong to the same installation.")
-        return attrs
-
-
-class StaffingRequirementSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = StaffingRequirement
-        fields = ("id", "weekday", "position", "zone", "shift", "minimum_count", "maximum_count", "active")
-        read_only_fields = ("id",)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        company = self.context.get("company")
-        if company:
-            self.fields["position"].queryset = Position.objects.filter(installation__company=company)
-            self.fields["zone"].queryset = Zone.objects.filter(installation__company=company)
-            self.fields["shift"].queryset = Shift.objects.filter(installation__company=company)
-
-    def validate(self, attrs):
-        company = self.context["company"]
-        if not 0 <= attrs["weekday"] <= 6:
-            raise serializers.ValidationError({"weekday": "Weekday must be between 0 and 6."})
-        if attrs.get("maximum_count") is not None and attrs["maximum_count"] < attrs["minimum_count"]:
-            raise serializers.ValidationError({"maximum_count": "Maximum count must be at least the minimum count."})
-        related = (attrs["position"], attrs["zone"], attrs["shift"])
-        if any(item.company_id != company.id for item in related):
-            raise serializers.ValidationError("All requirement resources must belong to the active company.")
-        installation_ids = {item.installation_id for item in related}
-        if len(installation_ids) != 1:
-            raise serializers.ValidationError("All requirement resources must belong to the same installation.")
-        if not ZoneShiftPreset.objects.filter(company=company, zone=attrs["zone"], shift=attrs["shift"], active=True).exists():
-            raise serializers.ValidationError("The zone and shift must have an active preset.")
-        return attrs
 
 
 class CompanyScopedModelSerializer(serializers.ModelSerializer):
@@ -705,25 +618,27 @@ class PlanningWeekSerializer(serializers.Serializer):
     week_start = serializers.DateField()
     week_end = serializers.DateField()
     assignments = serializers.SerializerMethodField()
-    zone_shift_presets = ZoneShiftPresetSerializer(many=True, required=False)
     requirements = StaffRequirementSerializer(many=True, required=False)
     staff_requirements = StaffRequirementSerializer(many=True, required=False)
 
     def get_assignments(self, obj):
-        return PlanningWeekAssignmentSerializer(obj.get("assignments", []), many=True).data
+        return [
+            {
+                "id": str(assignment.id),
+                "employee": str(assignment.employee_id),
+                "date": assignment.date.isoformat(),
+                "work_date": assignment.date.isoformat(),
+                "zone": str(assignment.zone_id),
+                "shift": str(assignment.shift_id),
+                "position": str(assignment.position_id),
+                "notes": assignment.notes or "",
+                "note": assignment.notes or "",
+            }
+            for assignment in obj.get("assignments", [])
+        ]
 
 
-class PlanningWeekAssignmentSerializer(serializers.ModelSerializer):
-    work_date = serializers.DateField(source="date")
-    note = serializers.CharField(source="notes", allow_blank=True, required=False)
-
-    class Meta:
-        model = Assignment
-        fields = ("id", "employee", "work_date", "date", "zone", "shift", "position", "note", "notes")
-        read_only_fields = fields
-
-
-class PlanningAssignmentWriteSerializer(serializers.Serializer):
+class PlanningWeekAssignmentWriteSerializer(serializers.Serializer):
     employee = serializers.PrimaryKeyRelatedField(queryset=Employee.objects.none())
     date = serializers.DateField(required=False)
     work_date = serializers.DateField(required=False)
@@ -797,8 +712,17 @@ class PlanningAssignmentWriteSerializer(serializers.Serializer):
         if not employee.active:
             raise serializers.ValidationError({"employee": "Inactive employees cannot be assigned."})
 
-        if not ZoneShiftPreset.objects.filter(company=company, zone=zone, shift=shift, active=True).exists():
-            raise serializers.ValidationError({"shift": "This zone and shift combination is not configured."})
+        requirement_query = StaffRequirement.objects.filter(
+            installation=employee.installation,
+            zone=zone,
+            shift=shift,
+            position=position,
+            active=True,
+        ).filter(
+            Q(date=work_date) | Q(date__isnull=True, day_of_week=work_date.weekday())
+        )
+        if not requirement_query.exists():
+            raise serializers.ValidationError({"position": "This position is not required for this zone and shift on this date."})
 
         if work_date < week_start or work_date > week_end:
             raise serializers.ValidationError(
@@ -811,13 +735,17 @@ class PlanningAssignmentWriteSerializer(serializers.Serializer):
         return attrs
 
     def _is_employee_available(self, employee, shift, work_date):
-        if EmployeeTimeOff.objects.filter(
+        time_offs = EmployeeTimeOff.objects.filter(
             employee=employee,
             status=EmployeeTimeOff.Status.APPROVED,
             start_date__lte=work_date,
             end_date__gte=work_date,
-        ).exists():
-            return False
+        )
+        for time_off in time_offs:
+            if not time_off.start_time or not time_off.end_time:
+                return False
+            if time_off.start_time < shift.end_time and time_off.end_time > shift.start_time:
+                return False
 
         exceptions = EmployeeAvailabilityException.objects.filter(employee=employee, date=work_date)
         for exception in exceptions:
@@ -848,7 +776,7 @@ class PlanningAssignmentWriteSerializer(serializers.Serializer):
 
 
 class PlanningWeekWriteSerializer(serializers.Serializer):
-    assignments = PlanningAssignmentWriteSerializer(many=True)
+    assignments = PlanningWeekAssignmentWriteSerializer(many=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -869,6 +797,7 @@ class PlanningWeekWriteSerializer(serializers.Serializer):
         child.fields["employee"].queryset = Employee.objects.filter(installation__company=company)
         child.fields["zone"].queryset = Zone.objects.filter(installation__company=company)
         child.fields["shift"].queryset = Shift.objects.filter(installation__company=company)
+        child.fields["position"].queryset = Position.objects.filter(installation__company=company)
 
     def validate(self, attrs):
         assignments = attrs["assignments"]

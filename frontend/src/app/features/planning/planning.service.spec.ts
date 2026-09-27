@@ -41,7 +41,7 @@ describe('PlanningService', () => {
 
   it('saves assignments for the selected planning week', async () => {
     const payload = {
-      assignments: [{ employee: 'employee-1', work_date: '2026-09-14', zone: 'zone-1', shift: 'shift-1', note: 'Cover' }],
+      assignments: [{ employee: 'employee-1', date: '2026-09-14', zone: 'zone-1', shift: 'shift-1', position: 'position-1', notes: 'Cover' }],
     };
     const response: PlanningWeekResponse = { week_start: '2026-09-14', week_end: '2026-09-20', assignments: [] };
     const requestPromise = firstValueFrom(planningService.saveWeek('2026-09-14', payload));

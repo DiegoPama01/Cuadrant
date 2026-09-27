@@ -192,7 +192,12 @@ export class EmployeesFormComponent {
   }
 
   private normalizedInitialValue(value: EmployeeUpsertPayload): EmployeeUpsertPayload {
-    const next = { ...this.createEmptyModel(), ...value };
+    const next = { ...this.createEmptyModel(), ...value,
+      allowed_zones: Array.isArray(value.allowed_zones) ? value.allowed_zones : [],
+      employee_positions: Array.isArray(value.employee_positions) ? value.employee_positions : [],
+      employee_zones: Array.isArray(value.employee_zones) ? value.employee_zones : [],
+      availabilities: Array.isArray(value.availabilities) ? value.availabilities : [],
+    };
     const employeePositions = next.employee_positions.length > 0
       ? next.employee_positions
       : next.position
@@ -211,7 +216,8 @@ export class EmployeesFormComponent {
   }
 
   private mergeAvailabilityRows(rows: EmployeeAvailabilityFormPayload[]): EmployeeAvailabilityFormPayload[] {
-    return WEEK_DAYS.map((day) => rows.find((row) => row.day_of_week === day.value) ?? {
+    const validRows = Array.isArray(rows) ? rows.filter((row) => row && Number.isInteger(row.day_of_week) && row.day_of_week >= 0 && row.day_of_week <= 6) : [];
+    return WEEK_DAYS.map((day) => validRows.find((row) => row.day_of_week === day.value) ?? {
       day_of_week: day.value,
       available: day.value < 5,
       start_time: day.value < 5 ? '07:00' : '',
@@ -234,7 +240,6 @@ export class EmployeesFormComponent {
       active: true,
       position: '',
       allowed_zones: [],
-      allowed_shifts: [],
       contract: { weekly_hours: 40, start_date: '', end_date: '', active: true },
       employee_positions: [],
       zone_mode: 'all',

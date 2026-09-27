@@ -20,7 +20,7 @@ import { Employee } from '../employees/employees.model';
 import { Position } from '../positions/positions.model';
 import { Shift } from '../shifts/shifts.model';
 import { Zone } from '../zones/zones.model';
-import type { EmployeeAvailability, EmployeeAvailabilityException, EmployeePosition, EmployeeTimeOff, EmployeeZone, PlanningWeekResponse, PlanningWeekWritePayload, ZoneShiftPreset } from './planning.model';
+import type { EmployeeAvailability, EmployeeAvailabilityException, EmployeePosition, EmployeeTimeOff, EmployeeZone, PlanningZoneShift, PlanningWeekResponse, PlanningWeekWritePayload } from './planning.model';
 import { PlanningService } from './planning.service';
 import { buildPlanningCsv, type PlanningExportRow } from './planning-export';
 import { PlanningEmployeeCardComponent } from './planning-employee-card.component';
@@ -28,7 +28,7 @@ import { PlanningDropEvent, PlanningDropZoneComponent } from './planning-drop-zo
 import { buildPlanningRows, type PlanningRow } from './planning-rows';
 
 interface Day { label: string; dateLabel: string; isoDate: string; }
-interface Assignment { zoneId: string; shiftId: string; note: string; }
+interface Assignment { zoneId: string; shiftId: string; positionId: string; note: string; }
 @Component({
   selector: 'app-planning',
   imports: [NgIcon, CdkDropList, CdkDropListGroup, HlmButtonImports, HlmCardImports, HlmBadgeImports, HlmDatePickerImports, HlmTableImports, HlmInputImports, HlmDropdownMenuImports, PlanningEmployeeCardComponent, PlanningDropZoneComponent],
@@ -78,7 +78,14 @@ export class PlanningComponent {
   }));
   protected readonly data = computed(() => this.planningResource.value());
   protected readonly week = computed(() => this.planningWeekResource.value());
-  protected readonly presets = computed(() => this.week()?.zone_shift_presets ?? []);
+  protected readonly presets = computed<PlanningZoneShift[]>(() => {
+    const pairs = new Map<string, PlanningZoneShift>();
+    for (const requirement of this.staffRequirements()) {
+      const id = `${requirement.zone}:${requirement.shift}`;
+      if (!pairs.has(id)) pairs.set(id, { id, zone: requirement.zone, shift: requirement.shift, active: true, sort_order: 0 });
+    }
+    return [...pairs.values()];
+  });
   protected readonly rows = computed<PlanningRow[]>(() => {
     const data = this.data();
     if (!data) return [];
@@ -92,7 +99,11 @@ export class PlanningComponent {
   protected readonly employeeById = computed(() => new Map((this.data()?.employees ?? []).map((employee) => [employee.id, employee])));
   protected readonly zoneById = computed(() => new Map((this.data()?.zones ?? []).map((zone) => [zone.id, zone])));
   protected readonly shiftById = computed(() => new Map((this.data()?.shifts ?? []).map((shift) => [shift.id, shift])));
-  protected readonly staffRequirements = computed(() => this.week()?.staff_requirements ?? this.week()?.requirements ?? []);
+  protected readonly staffRequirements = computed(() => {
+    const week = this.week();
+    const staffRequirements = week?.staff_requirements ?? [];
+    return staffRequirements.length > 0 ? staffRequirements : week?.requirements ?? [];
+  });
   protected readonly employeePositionsByEmployee = computed(() => this.groupByEmployee(this.week()?.employee_positions ?? []));
   protected readonly employeeZonesByEmployee = computed(() => this.groupByEmployee(this.week()?.employee_zones ?? []));
   protected readonly employeeAvailabilitiesByEmployee = computed(() => this.groupByEmployee(this.week()?.employee_availabilities ?? []));
@@ -115,15 +126,21 @@ export class PlanningComponent {
   protected shiftLabel(id: string): string { const shift = this.shiftById().get(id); return shift ? `${shift.name} ${shift.start_time.slice(0, 5)}-${shift.end_time.slice(0, 5)}` : 'Shift'; }
   protected assignmentsFor(row: PlanningRow, date: string): Employee[] { return (this.data()?.employees ?? []).filter((employee) => { const assignment = this.assignments()[this.key(employee.id, date)]; return assignment?.zoneId === row.preset.zone && assignment.shiftId === row.preset.shift; }); }
   protected coverage(row: PlanningRow, date: string): number { return this.assignmentsFor(row, date).length; }
+  protected requiredCount(row: PlanningRow, date: string): number { return this.requirementsForDate(row, date).reduce((total, requirement) => total + requirement.required_employees, 0); }
   protected requiredPositionIds(row: PlanningRow): string[] { return row.requirements.map((requirement) => requirement.position.id); }
   protected employeeCardPositionName(employee: Employee, row?: PlanningRow): string { const matchingPosition = row?.requirements.find((requirement) => this.employeePositionIds(employee).includes(requirement.position.id))?.position.id; return this.positionName(matchingPosition ?? this.primaryPositionId(employee)); }
-  protected moveEmployee(event: PlanningDropEvent, date: string, preset: ZoneShiftPreset): void {
+  protected moveEmployee(event: PlanningDropEvent, date: string, preset: PlanningZoneShift): void {
     const employeeId = event.employee.id;
     const employee = this.employeeById().get(employeeId);
     const row = this.rows().find((item) => item.preset.zone === preset.zone && item.preset.shift === preset.shift);
     const validationError = this.assignmentValidationError(employee, row, date, preset);
     if (validationError) {
       this.alerts.error(validationError.message, { description: validationError.description });
+      return;
+    }
+    const positionId = this.positionForDrop(employee!, row!, date);
+    if (!positionId) {
+      this.alerts.error('No quedan puestos requeridos disponibles.', { description: 'El empleado puede cubrir puestos de esta fila, pero ya se han cubierto las plazas requeridas.' });
       return;
     }
     if (event.source?.date === date && event.source.preset.zone === preset.zone && event.source.preset.shift === preset.shift) {
@@ -134,7 +151,7 @@ export class PlanningComponent {
       const next = { ...state };
       delete next[this.key(employeeId, date)];
       if (event.source) delete next[this.key(employeeId, event.source.date)];
-      next[this.key(employeeId, date)] = { zoneId: preset.zone, shiftId: preset.shift, note: '' };
+      next[this.key(employeeId, date)] = { zoneId: preset.zone, shiftId: preset.shift, positionId, note: '' };
       return next;
     });
     this.assignmentRevision += 1;
@@ -149,8 +166,8 @@ export class PlanningComponent {
     this.scheduleAutoSave();
   }
   protected exportPlanning(): void { const data = this.data(); if (!data || this.isExporting()) return; this.isExporting.set(true); try { const rows: PlanningExportRow[] = data.employees.filter((employee) => employee.active).map((employee) => ({ employee: this.employeeName(employee.id), position: this.positionName(this.primaryPositionId(employee)), cells: this.days().map((day) => { const assignment = this.assignments()[this.key(employee.id, day.isoDate)]; const shift = assignment ? this.shiftById().get(assignment.shiftId) : undefined; return { date: day.isoDate, day: day.label, zone: assignment ? this.zoneName(assignment.zoneId) : '', shift: shift?.name ?? '', startTime: shift?.start_time ?? '', endTime: shift?.end_time ?? '', note: assignment?.note ?? '' }; }) })); const blob = new Blob([`\ufeff${buildPlanningCsv(rows)}`], { type: 'text/csv;charset=utf-8' }); const url = URL.createObjectURL(blob); const link = this.document.createElement('a'); link.href = url; link.download = `planning-${this.weekStartIso()}.csv`; link.click(); URL.revokeObjectURL(url); } finally { this.isExporting.set(false); } }
-  private syncAssignments(week: PlanningWeekResponse): void { const next: Record<string, Assignment> = {}; for (const assignment of week.assignments) next[this.key(assignment.employee, assignment.work_date)] = { zoneId: assignment.zone, shiftId: assignment.shift, note: assignment.note ?? '' }; this.assignments.set(next); this.hasPendingChanges.set(false); }
-  private writePayload(): PlanningWeekWritePayload['assignments'] { return Object.entries(this.assignments()).map(([key, assignment]) => { const [employee, work_date] = key.split(':'); return { employee: employee ?? '', work_date: work_date ?? '', zone: assignment.zoneId, shift: assignment.shiftId, note: assignment.note }; }); }
+  private syncAssignments(week: PlanningWeekResponse): void { const next: Record<string, Assignment> = {}; for (const assignment of week.assignments) next[this.key(assignment.employee, assignment.date ?? assignment.work_date)] = { zoneId: assignment.zone, shiftId: assignment.shift, positionId: assignment.position, note: assignment.notes ?? assignment.note ?? '' }; this.assignments.set(next); this.hasPendingChanges.set(false); }
+  private writePayload(): PlanningWeekWritePayload['assignments'] { return Object.entries(this.assignments()).map(([key, assignment]) => { const [employee, date] = key.split(':'); return { employee: employee ?? '', date: date ?? '', zone: assignment.zoneId, shift: assignment.shiftId, position: assignment.positionId, notes: assignment.note }; }); }
   private scheduleAutoSave(): void {
     this.autoSaveQueued = true;
     if (this.autoSaveTimer) clearTimeout(this.autoSaveTimer);
@@ -183,7 +200,32 @@ export class PlanningComponent {
   private allowedZoneIds(employee: Employee): string[] { const employeeZones = this.employeeZoneRows(employee); const zoneIds = employeeZones.filter((item) => item.active !== false).map((item) => item.zone); return zoneIds.length > 0 ? zoneIds : employee.allowed_zones; }
   private canWorkInZone(employee: Employee, zoneId: string): boolean { return employee.all_zones === true || this.allowedZoneIds(employee).includes(zoneId); }
   private canCoverRequiredPosition(employee: Employee, row: PlanningRow): boolean { const positionIds = this.employeePositionIds(employee); return row.requirements.some((requirement) => positionIds.includes(requirement.position.id)); }
-  private assignmentValidationError(employee: Employee | undefined, row: PlanningRow | undefined, date: string, preset: ZoneShiftPreset): { message: string; description?: string } | null {
+  private requirementsForDate(row: PlanningRow, date: string) {
+    const dateRequirements = this.staffRequirements().filter((requirement) => requirement.zone === row.preset.zone
+      && requirement.shift === row.preset.shift && requirement.date === date);
+    const applicable = dateRequirements.length > 0
+      ? dateRequirements
+      : this.staffRequirements().filter((requirement) => requirement.zone === row.preset.zone
+        && requirement.shift === row.preset.shift && requirement.date == null
+        && requirement.day_of_week === this.mondayFirstDayOfWeek(date));
+    return applicable;
+  }
+  private positionForDrop(employee: Employee, row: PlanningRow, date: string): string | null {
+    const positionIds = this.employeePositionIds(employee);
+    const primary = this.primaryPositionId(employee);
+    const requiredForDate = this.requirementsForDate(row, date);
+    const preferredRequirements = [...requiredForDate].sort((a, b) => Number(b.position === primary) - Number(a.position === primary));
+    for (const requirement of preferredRequirements) {
+      if (!positionIds.includes(requirement.position)) continue;
+      const currentCount = Object.entries(this.assignments()).filter(([key, assignment]) => {
+        const [, assignedDate] = key.split(':');
+        return assignedDate === date && assignment.zoneId === row.preset.zone && assignment.shiftId === row.preset.shift && assignment.positionId === requirement.position;
+      }).length;
+      if (currentCount < requirement.required_employees) return requirement.position;
+    }
+    return null;
+  }
+  private assignmentValidationError(employee: Employee | undefined, row: PlanningRow | undefined, date: string, preset: PlanningZoneShift): { message: string; description?: string } | null {
     if (!employee) return { message: 'No se pudo identificar al empleado arrastrado.' };
     if (!preset.zone || !preset.shift) return { message: 'El destino de planificación está incompleto.', description: 'Falta la zona o el turno del cuadrante.' };
     if (!this.zoneById().has(preset.zone)) return { message: 'La zona del destino ya no existe o no está cargada.' };

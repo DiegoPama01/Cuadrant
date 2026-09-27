@@ -64,7 +64,6 @@ export class EmployeesFormPageComponent {
         active: true,
         position: '',
         allowed_zones: [],
-        allowed_shifts: [],
         contract: { weekly_hours: 40, start_date: '', end_date: '', active: true },
         employee_positions: [],
         zone_mode: 'all',
@@ -95,8 +94,7 @@ export class EmployeesFormPageComponent {
       notes: employee.notes ?? '',
       active: employee.active,
       position: employee.position ?? '',
-      allowed_zones: [...employee.allowed_zones],
-      allowed_shifts: [...employee.allowed_shifts],
+      allowed_zones: Array.isArray(employee.allowed_zones) ? [...employee.allowed_zones] : [],
       contract: {
         id: activeContract?.id,
         weekly_hours: activeContract?.weekly_hours ?? 40,
@@ -109,10 +107,10 @@ export class EmployeesFormPageComponent {
         position: position.position,
         primary: position.primary ?? false,
       })),
-      zone_mode: employeeZones.length > 0 || employee.allowed_zones.length > 0 ? 'custom' : 'all',
+      zone_mode: employeeZones.length > 0 || (Array.isArray(employee.allowed_zones) && employee.allowed_zones.length > 0) ? 'custom' : 'all',
       employee_zones: employeeZones.length > 0
         ? employeeZones.map((zone) => ({ id: zone.id, zone: zone.zone, preferred: zone.preferred ?? false }))
-        : employee.allowed_zones.map((zone) => ({ zone, preferred: false })),
+        : (Array.isArray(employee.allowed_zones) ? employee.allowed_zones : []).map((zone) => ({ zone, preferred: false })),
       availability_mode: availabilities.length > 0 ? 'custom' : 'unrestricted',
       availabilities: availabilities.map((availability) => ({
         id: availability.id,

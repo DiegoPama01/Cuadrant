@@ -48,7 +48,7 @@ class EmployeeAdmin(admin.ModelAdmin):
     )
     list_filter = ("installation__company", "installation", "position", "active")
     search_fields = ("first_name", "last_name", "employee_code", "email")
-    filter_horizontal = ("allowed_zones", "allowed_shifts")
+    filter_horizontal = ("allowed_zones",)
 
 
 admin.site.register(Contract)

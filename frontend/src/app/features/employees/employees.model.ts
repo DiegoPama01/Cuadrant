@@ -20,7 +20,6 @@ export interface Employee {
   updated_at?: string;
   position: string;
   allowed_zones: string[];
-  allowed_shifts: string[];
   contracts?: Contract[];
   availabilities?: EmployeeAvailability[];
   positions?: EmployeePosition[];
@@ -75,7 +74,6 @@ export interface EmployeeUpsertPayload {
   active: boolean;
   position: string;
   allowed_zones: string[];
-  allowed_shifts: string[];
   contract: EmployeeContractFormPayload;
   employee_positions: EmployeePositionFormPayload[];
   zone_mode: EmployeeZoneMode;

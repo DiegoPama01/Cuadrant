@@ -246,16 +246,16 @@
                           <span class="truncate font-medium">{{
                             shiftName(row.preset.shift)
                           }}</span>
-                          @if (coverage(row, day.isoDate) >= row.minimum) {
+                          @if (coverage(row, day.isoDate) >= requiredCount(row, day.isoDate)) {
                             <span hlmBadge variant="secondary"
-                              >{{ coverage(row, day.isoDate) }}/{{ row.minimum }}</span
+                              >{{ coverage(row, day.isoDate) }}/{{ requiredCount(row, day.isoDate) }}</span
                             >
                           } @else {
                             <span
                               hlmBadge
                               variant="outline"
                               class="border-yellow-300 bg-yellow-100 text-yellow-900 dark:border-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-200"
-                              >{{ coverage(row, day.isoDate) }}/{{ row.minimum }}</span
+                              >{{ coverage(row, day.isoDate) }}/{{ requiredCount(row, day.isoDate) }}</span
                             >
                           }
                         </div>

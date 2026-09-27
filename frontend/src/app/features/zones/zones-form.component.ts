@@ -9,7 +9,7 @@ import { HlmInputImports } from '@spartan-ng/helm/input';
 import { HlmSwitchImports } from '@spartan-ng/helm/switch';
 import { HlmTextareaImports } from '@spartan-ng/helm/textarea';
 import { Position, PositionUpsertPayload } from '../positions/positions.model';
-import { ZoneShiftPositionRequirement, ZoneUpsertPayload } from './zones.model';
+import { ZonePositionRequirement, ZoneUpsertPayload } from './zones.model';
 import { Shift, ShiftUpsertPayload } from '../shifts/shifts.model';
 import { SelectionTableComponent } from '../../shared/selection-table/selection-table.component';
 import { SelectionTableItem } from '../../shared/selection-table/selection-table.model';
@@ -44,7 +44,7 @@ export class ZonesFormComponent {
     color: randomFormColor(),
     sort_order: 0,
     active: true,
-    shift_presets: [],
+    staff_requirements: [],
   });
   protected readonly localShifts = signal<Shift[]>([]);
   protected readonly localPositions = signal<Position[]>([]);
@@ -57,7 +57,7 @@ export class ZonesFormComponent {
     label: shift.name,
     detail: `${shift.start_time.slice(0, 5)}-${shift.end_time.slice(0, 5)}`,
   })));
-  protected readonly selectedShiftIds = computed(() => this.model().shift_presets.map((preset) => preset.shift));
+  protected readonly selectedShiftIds = computed(() => this.model().staff_requirements.map((requirement) => requirement.shift));
   protected readonly positionOptions = computed<SelectionTableItem[]>(() => this.localPositions().map((position) => ({
     id: position.id,
     label: position.name,
@@ -69,20 +69,20 @@ export class ZonesFormComponent {
 
   protected toggleShift(shiftId: string, checked: boolean): void {
     this.model.update((value) => {
-      const current = value.shift_presets.filter((preset) => preset.shift !== shiftId);
+      const current = value.staff_requirements.filter((requirement) => requirement.shift !== shiftId);
       return {
         ...value,
-        shift_presets: checked ? [...current, { shift: shiftId, positions: [] }] : current,
+        staff_requirements: checked ? [...current, { shift: shiftId, positions: [] }] : current,
       };
     });
     if (checked) this.activeShiftId.set(shiftId);
     if (!checked && this.activeShiftId() === shiftId) {
-      this.activeShiftId.set(this.model().shift_presets[0]?.shift ?? null);
+      this.activeShiftId.set(this.model().staff_requirements[0]?.shift ?? null);
     }
   }
 
   protected isShiftSelected(shiftId: string): boolean {
-    return this.model().shift_presets.some((preset) => preset.shift === shiftId);
+    return this.model().staff_requirements.some((requirement) => requirement.shift === shiftId);
   }
 
   protected selectShift(shiftId: string): void {
@@ -101,9 +101,9 @@ export class ZonesFormComponent {
     return this.localShifts().find((shift) => shift.id === this.activeShiftId());
   }
 
-  protected activeRequirements(): ZoneShiftPositionRequirement[] {
+  protected activeRequirements(): ZonePositionRequirement[] {
     const shiftId = this.activeShiftId();
-    return this.model().shift_presets.find((preset) => preset.shift === shiftId)?.positions ?? [];
+    return this.model().staff_requirements.find((requirement) => requirement.shift === shiftId)?.positions ?? [];
   }
 
   protected isPositionSelected(positionId: string): boolean {
@@ -131,9 +131,9 @@ export class ZonesFormComponent {
     if (!shiftId || this.isPositionSelected(positionId)) return;
     this.model.update((value) => ({
       ...value,
-      shift_presets: value.shift_presets.map((preset) => preset.shift === shiftId
-        ? { ...preset, positions: [...preset.positions, { position: positionId, required_count: 1 }] }
-        : preset),
+      staff_requirements: value.staff_requirements.map((requirement) => requirement.shift === shiftId
+        ? { ...requirement, positions: [...requirement.positions, { position: positionId, required_count: 1 }] }
+        : requirement),
     }));
   }
 
@@ -141,9 +141,9 @@ export class ZonesFormComponent {
     const shiftId = this.activeShiftId();
     this.model.update((value) => ({
       ...value,
-      shift_presets: value.shift_presets.map((preset) => preset.shift === shiftId
-        ? { ...preset, positions: preset.positions.filter((item) => item.position !== positionId) }
-        : preset),
+      staff_requirements: value.staff_requirements.map((requirement) => requirement.shift === shiftId
+        ? { ...requirement, positions: requirement.positions.filter((item) => item.position !== positionId) }
+        : requirement),
     }));
   }
 
@@ -151,14 +151,14 @@ export class ZonesFormComponent {
     const shiftId = this.activeShiftId();
     this.model.update((value) => ({
       ...value,
-      shift_presets: value.shift_presets.map((preset) => preset.shift === shiftId
+      staff_requirements: value.staff_requirements.map((requirement) => requirement.shift === shiftId
         ? {
-            ...preset,
-            positions: preset.positions.map((item) => item.position === positionId
+            ...requirement,
+            positions: requirement.positions.map((item) => item.position === positionId
               ? { ...item, required_count: Math.max(1, count || 1) }
               : item),
           }
-        : preset),
+        : requirement),
     }));
   }
 
@@ -193,10 +193,17 @@ export class ZonesFormComponent {
 
   constructor() {
     effect(() => {
-      this.model.set(this.initialValue());
+      const initialValue = this.initialValue();
+      const requirements = Array.isArray(initialValue.staff_requirements)
+        ? initialValue.staff_requirements.filter((item) => item && typeof item.shift === 'string').map((item) => ({
+            shift: item.shift,
+            positions: Array.isArray(item.positions) ? item.positions.filter((position) => position && typeof position.position === 'string' && Number.isFinite(position.required_count)) : [],
+          }))
+        : [];
+      this.model.set({ ...initialValue, staff_requirements: requirements });
       this.localShifts.set(this.shifts());
       this.localPositions.set(this.positions());
-      this.activeShiftId.set(this.initialValue().shift_presets[0]?.shift ?? null);
+      this.activeShiftId.set(requirements[0]?.shift ?? null);
     });
   }
 

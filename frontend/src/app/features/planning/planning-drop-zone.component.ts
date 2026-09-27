@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
 import { Employee } from '../employees/employees.model';
-import { ZoneShiftPreset } from './planning.model';
+import { PlanningZoneShift } from './planning.model';
 import { PlanningEmployeeCardComponent } from './planning-employee-card.component';
 
 export interface PlanningDropListData {
   date: string;
-  preset: ZoneShiftPreset;
+  preset: PlanningZoneShift;
 }
 
 export interface PlanningDropEvent {
@@ -20,7 +20,7 @@ export interface PlanningDropEvent {
   </div>
 ` })
 export class PlanningDropZoneComponent {
-  readonly preset = input.required<ZoneShiftPreset>();
+  readonly preset = input.required<PlanningZoneShift>();
   readonly assigned = input.required<Employee[]>();
   readonly date = input.required<string>();
   readonly positionName = input('');

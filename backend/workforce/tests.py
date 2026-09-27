@@ -13,8 +13,8 @@ from authorization import fga
 from authorization.client import OpenFGAError, TupleKey
 from authorization.permissions import can_access_planning_resource
 from organizations.models import Company, CompanyMembership, Installation
-from .models import Contract, Employee, EmployeeAvailability, EmployeePosition, EmployeeZone, Position, Shift, Zone, ZoneShiftPreset
-from .serializers import AssignmentSerializer, EmployeePositionSerializer, PlanningAssignmentWriteSerializer, StaffRequirementSerializer
+from .models import Assignment, Contract, Employee, EmployeeAvailability, EmployeePosition, EmployeeZone, Position, Shift, StaffRequirement, Zone
+from .serializers import AssignmentSerializer, EmployeePositionSerializer, PlanningWeekAssignmentWriteSerializer, StaffRequirementSerializer
 
 
 OPENFGA_ENABLED = {
@@ -208,6 +208,28 @@ class WorkforceInfrastructureTests(APITestCase):
         other_response = self.client.get(reverse("contract-list", kwargs={"company_id": self.other_company.id}))
         self.assertEqual(other_response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_zone_form_persists_staff_requirements_for_each_weekday(self):
+        response = self.client.post(
+            reverse("zone-list", kwargs={"company_id": self.company.id}),
+            {
+                "installation": str(self.installation.id),
+                "name": "Breakfast",
+                "color": "#123456",
+                "staff_requirements": [{
+                    "shift": str(self.shift.id),
+                    "positions": [{"position": str(self.position.id), "required_count": 2}],
+                }],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        zone = Zone.objects.get(id=response.data["id"])
+        requirements = StaffRequirement.objects.filter(zone=zone, shift=self.shift, position=self.position)
+        self.assertEqual(requirements.count(), 7)
+        self.assertEqual(set(requirements.values_list("required_employees", flat=True)), {2})
+        self.assertEqual(response.data["staff_requirements"][0]["positions"][0]["required_count"], 2)
+
     def test_employee_endpoint_creates_composite_form_payload(self):
         payload = {
             "installation": str(self.installation.id),
@@ -268,19 +290,60 @@ class WorkforceInfrastructureTests(APITestCase):
     def test_all_zones_employee_can_be_assigned_without_allowed_zone_row(self):
         self.employee.all_zones = True
         self.employee.save(update_fields=["all_zones"])
-        self.employee.allowed_shifts.add(self.shift)
-        ZoneShiftPreset.objects.create(company=self.company, zone=self.zone, shift=self.shift, active=True)
-        serializer = PlanningAssignmentWriteSerializer(
+        EmployeePosition.objects.create(employee=self.employee, position=self.position, primary=True)
+        StaffRequirement.objects.create(
+            installation=self.installation,
+            zone=self.zone,
+            shift=self.shift,
+            position=self.position,
+            day_of_week=0,
+            required_employees=1,
+        )
+        serializer = PlanningWeekAssignmentWriteSerializer(
             data={
                 "employee": self.employee.id,
-                "work_date": "2026-09-28",
+                "date": "2026-09-28",
                 "shift": self.shift.id,
                 "zone": self.zone.id,
+                "position": self.position.id,
             },
             context={"company": self.company, "week_start": datetime.date(2026, 9, 28)},
         )
 
         self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_planning_week_writes_new_assignments_and_returns_staff_requirements(self):
+        EmployeePosition.objects.create(employee=self.employee, position=self.position, primary=True)
+        requirement = StaffRequirement.objects.create(
+            installation=self.installation,
+            zone=self.zone,
+            shift=self.shift,
+            position=self.position,
+            day_of_week=0,
+            required_employees=1,
+        )
+        response = self.client.put(
+            reverse("planning-week-detail", kwargs={"company_id": self.company.id, "week_start": "2026-09-28"}),
+            {
+                "assignments": [{
+                    "employee": str(self.employee.id),
+                    "date": "2026-09-28",
+                    "zone": str(self.zone.id),
+                    "shift": str(self.shift.id),
+                    "position": str(self.position.id),
+                }],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertTrue(Assignment.objects.filter(
+            employee=self.employee,
+            date="2026-09-28",
+            position=self.position,
+        ).exists())
+        self.assertEqual(response.data["assignments"][0]["position"], str(self.position.id))
+        self.assertIn(str(requirement.id), {item["id"] for item in response.data["staff_requirements"]})
 
     def test_grant_quadrant_access_creates_member_membership_for_employee_user(self):
         user_model = get_user_model()
