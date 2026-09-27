@@ -59,25 +59,22 @@
         <thead hlmTableHeader>
           <tr hlmTableRow>
             <th hlmTableHead>Name</th>
+            <th hlmTableHead>Code</th>
             <th hlmTableHead>Hours</th>
-            <th hlmTableHead>Color</th>
              <th hlmTableHead class="text-right">Actions</th>
           </tr>
         </thead>
         <tbody hlmTableBody>
           @for (shift of shifts(); track shift.id) {
             <tr hlmTableRow>
-              <td hlmTableCell class="font-medium">{{ shift.name }}</td>
-              <td hlmTableCell class="text-muted-foreground">{{ shift.start_time }} - {{ shift.end_time }}</td>
-              <td hlmTableCell>
+              <td hlmTableCell class="font-medium">
                 <div class="flex items-center gap-2">
-                  <span
-                    class="h-3 w-3 rounded-full border border-black/10"
-                    [style.background-color]="shift.color"
-                  ></span>
-                  <span>{{ shift.color }}</span>
+                  <span class="size-3 shrink-0 rounded-full border border-black/10" [style.background-color]="shift.color" [hlmTooltip]="shift.color || 'Sin color asignado'" [attr.aria-label]="shift.color ? 'Color asignado: ' + shift.color : 'Sin color asignado'"></span>
+                  <span>{{ shift.name }}</span>
                 </div>
               </td>
+              <td hlmTableCell class="text-muted-foreground">{{ shift.code || '—' }}</td>
+              <td hlmTableCell class="text-muted-foreground">{{ shift.start_time }} - {{ shift.end_time }}</td>
                <td hlmTableCell class="text-right">
                 <div class="flex justify-end gap-2">
                   <button hlmBtn type="button" variant="outline" size="sm" [routerLink]="[shift.id, 'edit']">Edit</button>

@@ -15,8 +15,8 @@ export interface PlanningDropEvent {
 }
 
 @Component({ selector: 'app-planning-drop-zone', imports: [CdkDropList, PlanningEmployeeCardComponent], changeDetection: ChangeDetectionStrategy.OnPush, template: `
-  <div cdkDropList [cdkDropListData]="dropListData()" cdkDropListSortingDisabled (cdkDropListDropped)="drop($event)" class="flex min-h-24 h-full w-full flex-1 flex-col gap-1.5 p-1.5" [attr.aria-label]="shiftLabel()">
-    @for (employee of assigned(); track employee.id) { <app-planning-employee-card [employee]="employee" [positionName]="positionName()" [removable]="true" (removed)="removed.emit($event)" /> }
+  <div cdkDropList [cdkDropListData]="dropListData()" cdkDropListSortingDisabled (cdkDropListDropped)="drop($event)" class="flex min-h-24 h-full w-full flex-1 flex-col gap-1 p-1" [attr.aria-label]="shiftLabel()">
+    @for (employee of assigned(); track employee.id) { <app-planning-employee-card [employee]="employee" [positionName]="positionName()" [removable]="true" [compact]="true" (removed)="removed.emit($event)" /> }
   </div>
 ` })
 export class PlanningDropZoneComponent {

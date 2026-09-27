@@ -67,7 +67,12 @@
         <tbody hlmTableBody>
           @for (employee of employees(); track employee.id) {
             <tr hlmTableRow>
-              <td hlmTableCell class="font-medium">{{ employee.fullName }}</td>
+              <td hlmTableCell class="font-medium">
+                <div class="flex items-center gap-2">
+                  <span class="size-3 shrink-0 rounded-full border" [style.background-color]="employee.color" [hlmTooltip]="employee.color ? '' + employee.color : 'Sin color asignado'" [attr.aria-label]="employee.color ? 'Color asignado: ' + employee.color : 'Sin color asignado'"></span>
+                  <span>{{ employee.fullName }}</span>
+                </div>
+              </td>
               <td hlmTableCell>
                 <span hlmBadge [variant]="employee.active ? 'default' : 'secondary'">
                   {{ employee.active ? 'Active' : 'Inactive' }}

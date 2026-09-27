@@ -13,6 +13,7 @@ import { HlmBadgeImports } from '@spartan-ng/helm/badge';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { HlmTableImports } from '@spartan-ng/helm/table';
+import { HlmTooltipImports } from '@spartan-ng/helm/tooltip';
 import { PositionsService } from '../positions/positions.service';
 import { Employee } from './employees.model';
 import { EmployeesService } from './employees.service';
@@ -22,13 +23,14 @@ interface EmployeeRow {
   firstName: string;
   lastName: string;
   fullName: string;
+  color: string | null;
   active: boolean;
   positionName: string;
 }
 
 @Component({
   selector: 'app-employees',
-  imports: [RouterLink, HlmAlertDialogImports, HlmBadgeImports, HlmButtonImports, HlmCardImports, HlmTableImports],
+  imports: [RouterLink, HlmAlertDialogImports, HlmBadgeImports, HlmButtonImports, HlmCardImports, HlmTableImports, HlmTooltipImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './employees.component.html',
 })
@@ -106,6 +108,7 @@ export class EmployeesComponent {
       firstName,
       lastName,
       fullName: fullName || 'Unnamed employee',
+      color: employee.color ?? null,
       active: employee.active,
       positionName: positionsById.get(employee.position) ?? 'Unknown position',
     };
