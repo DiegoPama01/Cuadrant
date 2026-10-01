@@ -13,7 +13,7 @@ from authorization import fga
 from authorization.client import OpenFGAError, TupleKey
 from authorization.permissions import can_access_planning_resource
 from organizations.models import Company, CompanyMembership, Installation
-from .models import Assignment, Contract, Employee, EmployeeAvailability, EmployeePosition, EmployeeZone, Position, Shift, StaffRequirement, Zone
+from .models import Assignment, Contract, Employee, EmployeeAvailability, EmployeeAvailabilityException, EmployeePosition, EmployeeTimeOff, EmployeeZone, Position, Shift, StaffRequirement, Zone
 from .serializers import AssignmentSerializer, EmployeePositionSerializer, PlanningWeekAssignmentWriteSerializer, StaffRequirementSerializer
 
 
@@ -344,6 +344,45 @@ class WorkforceInfrastructureTests(APITestCase):
         ).exists())
         self.assertEqual(response.data["assignments"][0]["position"], str(self.position.id))
         self.assertIn(str(requirement.id), {item["id"] for item in response.data["staff_requirements"]})
+
+    def test_planning_week_persists_warning_level_non_required_position(self):
+        EmployeePosition.objects.create(employee=self.employee, position=self.position, primary=True)
+        self.employee.availability_unrestricted = True
+        self.employee.save(update_fields=["availability_unrestricted"])
+        response = self.client.put(
+            reverse("planning-week-detail", kwargs={"company_id": self.company.id, "week_start": "2026-09-28"}),
+            {"assignments": [{"employee": str(self.employee.id), "date": "2026-09-28",
+                               "zone": str(self.zone.id), "shift": str(self.shift.id),
+                               "position": str(self.position.id)}]}, format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertTrue(Assignment.objects.filter(employee=self.employee, date="2026-09-28").exists())
+        self.assertEqual(response.data["issues"][0]["code"], "position_not_required")
+        self.assertEqual(response.data["issues"][0]["severity"], "warning")
+
+    def test_planning_week_persists_and_returns_availability_warnings(self):
+        EmployeePosition.objects.create(employee=self.employee, position=self.position, primary=True)
+        self.employee.availability_unrestricted = False
+        self.employee.save(update_fields=["availability_unrestricted"])
+        EmployeeAvailability.objects.create(employee=self.employee, day_of_week=0, available=False)
+        EmployeeTimeOff.objects.create(employee=self.employee, start_date="2026-09-28", end_date="2026-09-28",
+                                       start_time=None, end_time=None, status=EmployeeTimeOff.Status.APPROVED)
+        EmployeeAvailabilityException.objects.create(employee=self.employee, date="2026-09-28", available=False)
+        response = self.client.put(
+            reverse("planning-week-detail", kwargs={"company_id": self.company.id, "week_start": "2026-09-28"}),
+            {"assignments": [{"employee": str(self.employee.id), "date": "2026-09-28",
+                               "zone": str(self.zone.id), "shift": str(self.shift.id),
+                               "position": str(self.position.id)}]}, format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertTrue(Assignment.objects.filter(employee=self.employee, date="2026-09-28").exists())
+        issues = response.data["issues"]
+        self.assertTrue({"availability", "approved_time_off", "unavailable_exception"}.issubset(
+            {issue["code"] for issue in issues}
+        ))
+        self.assertTrue(all(issue["severity"] == "warning" and issue["assignment"] for issue in issues))
 
     def test_grant_quadrant_access_creates_member_membership_for_employee_user(self):
         user_model = get_user_model()

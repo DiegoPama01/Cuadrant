@@ -19,6 +19,7 @@ import {
   lucideListFilter,
   lucideRefreshCw,
   lucideUserRound,
+  lucideTriangleAlert,
 } from '@ng-icons/lucide';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
@@ -45,12 +46,15 @@ import type {
   PlanningZoneShift,
   PlanningWeekResponse,
   PlanningWeekWritePayload,
+  PlanningIssue,
 } from './planning.model';
 import { PlanningService } from './planning.service';
 import { buildPlanningCsv, type PlanningExportRow } from './planning-export';
 import { PlanningEmployeeCardComponent } from './planning-employee-card.component';
 import { PlanningDropEvent, PlanningDropZoneComponent } from './planning-drop-zone.component';
 import { buildPlanningRows, type PlanningRow } from './planning-rows';
+import { PlanningIssuesService } from './planning-issues.service';
+import { PlanningIssuesSheetComponent } from './planning-issues-sheet.component';
 
 interface Day {
   label: string;
@@ -78,8 +82,10 @@ interface Assignment {
     HlmDropdownMenuImports,
     PlanningEmployeeCardComponent,
     PlanningDropZoneComponent,
+    PlanningIssuesSheetComponent,
   ],
   providers: [
+    PlanningIssuesService,
     provideIcons({
       lucideChevronLeft,
       lucideChevronRight,
@@ -88,6 +94,7 @@ interface Assignment {
       lucideListFilter,
       lucideRefreshCw,
       lucideUserRound,
+      lucideTriangleAlert,
     }),
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -110,6 +117,10 @@ export class PlanningComponent {
   protected readonly isSaving = signal(false);
   protected readonly hasPendingChanges = signal(false);
   protected readonly saveError = signal<string | null>(null);
+  protected readonly planningIssues = inject(PlanningIssuesService);
+  protected readonly warningIssues = computed(() =>
+    this.planningIssues.forWeek(this.days().map((day) => day.isoDate)),
+  );
   protected readonly isExporting = signal(false);
   private readonly autoSaveDelayMs = 2000;
   private autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -187,6 +198,9 @@ export class PlanningComponent {
   protected readonly visibleStaffCount = computed(() => this.visibleEmployees().length);
   protected readonly employeeById = computed(
     () => new Map((this.data()?.employees ?? []).map((employee) => [employee.id, employee])),
+  );
+  protected readonly employeeNames = computed(
+    () => new Map((this.data()?.employees ?? []).map((employee) => [employee.id, `${employee.first_name} ${employee.last_name}`.trim()])),
   );
   protected readonly zoneById = computed(
     () => new Map((this.data()?.zones ?? []).map((zone) => [zone.id, zone])),
@@ -297,18 +311,29 @@ export class PlanningComponent {
     const row = this.rows().find(
       (item) => item.preset.zone === preset.zone && item.preset.shift === preset.shift,
     );
-    const validationError = this.assignmentValidationError(employee, row, date, preset);
-    if (validationError) {
-      this.alerts.error(validationError.message, { description: validationError.description });
+    const issues = this.assignmentIssues(employee, row, date, preset);
+    const blockingIssue = issues.find((issue) => issue.severity === 'error');
+    if (blockingIssue) {
+      this.planningIssues.replaceForEmployeeDate(employeeId, date, issues);
+      this.alerts.error(blockingIssue.message);
       return;
     }
-    const positionId = this.positionForDrop(employee!, row!, date);
-    if (!positionId) {
-      this.alerts.error('No quedan puestos requeridos disponibles.', {
-        description:
-          'El empleado puede cubrir puestos de esta fila, pero ya se han cubierto las plazas requeridas.',
+    const requiredPositionId = this.positionForDrop(employee!, row!, date);
+    const positionId = requiredPositionId ?? this.primaryPositionId(employee!);
+    if (!requiredPositionId && row?.requirements.length) {
+      issues.push({
+        code: 'required_positions_filled',
+        severity: 'warning',
+        message: 'No required positions are available; the employee will be assigned to their primary position.',
+        employeeId,
+        date,
       });
-      return;
+    }
+    this.planningIssues.replaceForEmployeeDate(employeeId, date, issues);
+    if (issues.length > 0) {
+      this.alerts.warning('Assignment saved with warnings', {
+        description: issues.map((issue) => issue.message).join(' '),
+      });
     }
     if (
       event.source?.date === date &&
@@ -392,6 +417,31 @@ export class PlanningComponent {
         note: assignment.notes ?? assignment.note ?? '',
       };
     this.assignments.set(next);
+    const assignmentById = new Map(week.assignments.map((assignment) => [assignment.id, assignment]));
+    this.planningIssues.replaceServerIssues(
+      (week.issues ?? []).flatMap((issue) => {
+        const assignment = assignmentById.get(issue.assignment);
+        if (!assignment) return [];
+        const message = issue.code === 'position_not_required'
+          ? 'The assigned position is not required for this zone and shift.'
+          : issue.code === 'requirement_capacity_exceeded'
+            ? 'The required staffing level for this position and shift has been exceeded.'
+            : issue.code === 'availability'
+              ? 'The employee is outside their weekly availability for this shift.'
+              : issue.code === 'approved_time_off'
+                ? 'The employee has approved time off during this shift.'
+                : issue.code === 'unavailable_exception'
+                  ? 'The employee is marked unavailable for this shift.'
+            : issue.message;
+        return [{
+          code: issue.code,
+          severity: issue.severity,
+          message,
+          employeeId: assignment.employee,
+          date: assignment.date ?? assignment.work_date,
+        }];
+      }),
+    );
     this.hasPendingChanges.set(false);
   }
   private writePayload(): PlanningWeekWritePayload['assignments'] {
@@ -508,42 +558,34 @@ export class PlanningComponent {
     }
     return null;
   }
-  private assignmentValidationError(
+  private assignmentIssues(
     employee: Employee | undefined,
     row: PlanningRow | undefined,
     date: string,
     preset: PlanningZoneShift,
-  ): { message: string; description?: string } | null {
-    if (!employee) return { message: 'No se pudo identificar al empleado arrastrado.' };
+  ): PlanningIssue[] {
+    const issues: PlanningIssue[] = [];
+    const add = (code: string, severity: PlanningIssue['severity'], message: string): void => {
+      issues.push({ code, severity, message, employeeId: employee?.id ?? '', date });
+    };
+    if (!employee) { add('employee_missing', 'error', 'Could not identify the dragged employee.'); return issues; }
     if (!preset.zone || !preset.shift)
-      return {
-        message: 'El destino de planificación está incompleto.',
-        description: 'Falta la zona o el turno del cuadrante.',
-      };
+      { add('destination_incomplete', 'error', 'The planning destination is incomplete.'); return issues; }
     if (!this.zoneById().has(preset.zone))
-      return { message: 'La zona del destino ya no existe o no está cargada.' };
+      { add('zone_missing', 'error', 'The destination zone no longer exists or has not been loaded.'); return issues; }
     if (!this.shiftById().has(preset.shift))
-      return { message: 'El turno del destino ya no existe o no está cargado.' };
+      { add('shift_missing', 'error', 'The destination shift no longer exists or has not been loaded.'); return issues; }
     if (!this.canWorkInZone(employee, preset.zone))
-      return {
-        message: 'Zona no permitida para este empleado.',
-        description: `${this.employeeName(employee.id)} no tiene permiso para trabajar en ${this.zoneName(preset.zone)}.`,
-      };
+      add('zone_not_allowed', 'error', `${this.employeeName(employee.id)} is not allowed to work in ${this.zoneName(preset.zone)}.`);
     if (row && !this.canCoverRequiredPosition(employee, row))
-      return {
-        message: 'Puesto no compatible.',
-        description: 'El empleado no tiene ninguno de los puestos requeridos para este turno.',
-      };
+      add('position_incompatible', 'warning', 'The employee does not have any of the positions required for this shift; the assignment will be kept for review.');
     if (!this.isAvailableForShift(employee, date, preset.shift))
-      return {
-        message: 'El empleado no está disponible para este turno.',
-        description: 'Revisa su disponibilidad semanal para esa fecha y horario.',
-      };
+      add('availability', 'warning', 'The employee is unavailable according to their weekly availability.');
     if (this.hasApprovedTimeOff(employee.id, date))
-      return { message: 'El empleado tiene una ausencia aprobada ese día.' };
+      add('approved_time_off', 'warning', 'The employee has approved time off on this day.');
     if (this.hasUnavailableException(employee.id, date, preset.shift))
-      return { message: 'El empleado está marcado como no disponible para esa fecha o turno.' };
-    return null;
+      add('unavailable_exception', 'warning', 'The employee is marked unavailable for this date or shift.');
+    return issues;
   }
   private groupByEmployee<T extends { employee: string }>(items: T[]): Map<string, T[]> {
     const grouped = new Map<string, T[]>();

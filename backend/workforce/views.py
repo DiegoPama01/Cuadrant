@@ -424,15 +424,66 @@ class PlanningWeekView(APIView):
             | Q(date__isnull=True, day_of_week__in=weekdays)
         ).select_related("installation", "zone", "shift", "position")
 
+    def get_planning_issues(self, assignments, requirements):
+        requirements = list(requirements)
+        issues = []
+        grouped = {}
+        for assignment in assignments:
+            def add_issue(code, message):
+                issues.append({"code": code, "severity": "warning", "assignment": str(assignment.id), "message": message})
+
+            time_offs = EmployeeTimeOff.objects.filter(employee=assignment.employee, status=EmployeeTimeOff.Status.APPROVED,
+                                                       start_date__lte=assignment.date, end_date__gte=assignment.date)
+            if any(not item.start_time or not item.end_time or
+                   (item.start_time < assignment.shift.end_time and item.end_time > assignment.shift.start_time)
+                   for item in time_offs):
+                add_issue("approved_time_off", "Employee has approved time off during this shift.")
+
+            exceptions = EmployeeAvailabilityException.objects.filter(employee=assignment.employee, date=assignment.date, available=False)
+            if any(not item.start_time or not item.end_time or
+                   (item.start_time < assignment.shift.end_time and item.end_time > assignment.shift.start_time)
+                   for item in exceptions):
+                add_issue("unavailable_exception", "Employee is marked unavailable for this shift by an exception.")
+
+            if not assignment.employee.availability_unrestricted:
+                availabilities = EmployeeAvailability.objects.filter(employee=assignment.employee, day_of_week=assignment.date.weekday())
+                available = any(item.available and (not item.start_time or not item.end_time or
+                                 (item.start_time <= assignment.shift.start_time and item.end_time >= assignment.shift.end_time))
+                                for item in availabilities)
+                if not available:
+                    add_issue("availability", "Employee is outside their weekly availability for this shift.")
+
+            key = (assignment.date, assignment.zone_id, assignment.shift_id, assignment.position_id)
+            grouped.setdefault(key, []).append(assignment)
+            matching = [r for r in requirements if r.zone_id == assignment.zone_id
+                        and r.shift_id == assignment.shift_id and r.position_id == assignment.position_id
+                        and (r.date == assignment.date or (r.date is None and r.day_of_week == assignment.date.weekday()))]
+            if not matching:
+                issues.append({"code": "position_not_required", "severity": "warning",
+                               "assignment": str(assignment.id), "message": "Position is not required for this zone and shift on this date."})
+        for (work_date, zone_id, shift_id, position_id), group in grouped.items():
+            matching = [r for r in requirements if r.zone_id == zone_id and r.shift_id == shift_id
+                        and r.position_id == position_id and (r.date == work_date or (r.date is None and r.day_of_week == work_date.weekday()))]
+            if not matching:
+                continue
+            capacity = max(r.required_employees for r in matching)
+            for assignment in group[capacity:]:
+                issues.append({"code": "requirement_capacity_exceeded", "severity": "warning",
+                               "assignment": str(assignment.id), "message": "Staffing requirement capacity is exceeded."})
+        return issues
+
     def get(self, request, *args, **kwargs):
         week_start = self.get_week_start()
+        requirements = self.get_staff_requirements(self.get_company(), week_start)
+        assignments = list(self.get_queryset())
         serializer = PlanningWeekSerializer(
             {
                 "week_start": week_start,
                 "week_end": week_start + datetime.timedelta(days=6),
-                "assignments": self.get_queryset(),
-                "requirements": self.get_staff_requirements(self.get_company(), week_start),
-                "staff_requirements": self.get_staff_requirements(self.get_company(), week_start),
+                "assignments": assignments,
+                "requirements": requirements,
+                "staff_requirements": requirements,
+                "issues": self.get_planning_issues(assignments, requirements),
             }
         )
         return Response(serializer.data)
@@ -495,6 +546,7 @@ class PlanningWeekView(APIView):
                 "assignments": saved_assignments,
                 "requirements": self.get_staff_requirements(company, week_start),
                 "staff_requirements": self.get_staff_requirements(company, week_start),
+                "issues": self.get_planning_issues(saved_assignments, self.get_staff_requirements(company, week_start)),
             }
         )
         return Response(response_serializer.data, status=status.HTTP_200_OK)

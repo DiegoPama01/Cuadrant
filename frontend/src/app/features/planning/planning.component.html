@@ -2,15 +2,15 @@
   <header class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
     <div>
       <p class="text-muted-foreground text-sm font-medium uppercase tracking-[0.2em]">Planning</p>
-      <h1 class="text-3xl font-semibold tracking-tight">Cuadrante semanal</h1>
-      <p class="text-muted-foreground text-sm">Arrastra una persona a cualquier turno.</p>
+      <h1 class="text-3xl font-semibold tracking-tight">Weekly schedule</h1>
+      <p class="text-muted-foreground text-sm">Drag an employee to any shift.</p>
     </div>
     <div class="flex items-center gap-2">
       <button
         hlmBtn
         variant="outline"
         size="icon"
-        aria-label="Semana anterior"
+        aria-label="Previous week"
         (click)="previousWeek()"
       >
         <ng-icon name="lucideChevronLeft" /></button
@@ -22,7 +22,7 @@
         hlmBtn
         variant="outline"
         size="icon"
-        aria-label="Semana siguiente"
+        aria-label="Next week"
         (click)="nextWeek()"
       >
         <ng-icon name="lucideChevronRight" />
@@ -33,18 +33,18 @@
         hlmBtn
         variant="outline"
         [hlmDropdownMenuTrigger]="planningFilters"
-        aria-label="Filtrar planificación"
+        aria-label="Filter planning"
       >
-        <ng-icon name="lucideListFilter" /> Filtros</button
+        <ng-icon name="lucideListFilter" /> Filters</button
       ><button hlmBtn variant="outline" (click)="exportPlanning()" [disabled]="isExporting()">
-        <ng-icon name="lucideDownload" /> Exportar
+        <ng-icon name="lucideDownload" /> Export
       </button>
       @if (isSaving()) {
-        <span class="text-muted-foreground text-xs" aria-live="polite">Guardando...</span>
+        <span class="text-muted-foreground text-xs" aria-live="polite">Saving...</span>
       } @else if (hasPendingChanges()) {
-        <span class="text-muted-foreground text-xs" aria-live="polite">Cambios pendientes</span>
+        <span class="text-muted-foreground text-xs" aria-live="polite">Unsaved changes</span>
       }
-      <button hlmBtn variant="outline" size="icon" aria-label="Actualizar" (click)="reload()">
+      <button hlmBtn variant="outline" size="icon" aria-label="Refresh" (click)="reload()">
         <ng-icon name="lucideRefreshCw" />
       </button>
     </div>
@@ -52,13 +52,13 @@
 
   <ng-template #planningFilters>
     <hlm-dropdown-menu class="w-64">
-      <hlm-dropdown-menu-label>Filtrar planificación</hlm-dropdown-menu-label>
+      <hlm-dropdown-menu-label>Filter planning</hlm-dropdown-menu-label>
       <hlm-dropdown-menu-separator />
       <button hlmDropdownMenuItem type="button" [hlmDropdownMenuSubTrigger]="zoneFilters">
-        Zona<hlm-dropdown-menu-item-sub-indicator />
+        Zone<hlm-dropdown-menu-item-sub-indicator />
       </button>
       <button hlmDropdownMenuItem type="button" [hlmDropdownMenuSubTrigger]="positionFilters">
-        Posición<hlm-dropdown-menu-item-sub-indicator />
+        Position<hlm-dropdown-menu-item-sub-indicator />
       </button>
       <hlm-dropdown-menu-separator />
       <button
@@ -66,7 +66,7 @@
         type="button"
         (click)="zoneFilter.set('all'); positionFilter.set('all')"
       >
-        Limpiar filtros
+        Clear filters
       </button>
     </hlm-dropdown-menu>
     <ng-template #zoneFilters>
@@ -77,7 +77,7 @@
           [attr.aria-pressed]="zoneFilter() === 'all'"
           (click)="zoneFilter.set('all')"
         >
-          Todas
+          All zones
         </button>
         @for (zone of data()?.zones ?? []; track zone.id) {
           <button
@@ -99,7 +99,7 @@
           [attr.aria-pressed]="positionFilter() === 'all'"
           (click)="positionFilter.set('all')"
         >
-          Todas
+          All positions
         </button>
         @for (position of data()?.positions ?? []; track position.id) {
           <button
@@ -120,13 +120,13 @@
   }
   @if (planningResource.isLoading() || planningWeekResource.isLoading()) {
     <hlm-card
-      ><div hlmCardContent class="p-10 text-center">Cargando planificación...</div></hlm-card
+      ><div hlmCardContent class="p-10 text-center">Loading planning...</div></hlm-card
     >
   } @else if (planningResource.error() || planningWeekResource.error()) {
     <hlm-card
       ><div hlmCardContent class="flex flex-col items-center gap-3 p-10">
-        <p>No se pudo cargar la planificación.</p>
-        <button hlmBtn variant="outline" (click)="reload()">Reintentar</button>
+        <p>Could not load planning.</p>
+        <button hlmBtn variant="outline" (click)="reload()">Retry</button>
       </div></hlm-card
     >
   } @else {
@@ -136,8 +136,8 @@
           <div hlmCardHeader class="border-b">
             <div class="flex items-start justify-between">
               <div>
-                <h2 hlmCardTitle>Empleados</h2>
-                <p hlmCardDescription>{{ visibleStaffCount() }} disponibles</p>
+                <h2 hlmCardTitle>Employees</h2>
+                <p hlmCardDescription>{{ visibleStaffCount() }} available</p>
               </div>
             </div>
           </div>
@@ -145,13 +145,13 @@
             <input
               hlmInput
               type="search"
-              placeholder="Buscar empleado..."
-              aria-label="Buscar empleado"
+              placeholder="Search employees..."
+              aria-label="Search employees"
               [value]="employeeSearch()"
               (input)="employeeSearch.set($any($event.target).value)"
             />
             <p class="text-muted-foreground rounded-md bg-muted/50 p-2 text-xs">
-              Arrastra una persona a cualquier turno
+              Drag an employee to any shift
             </p>
             <div
               cdkDropList
@@ -166,7 +166,7 @@
                 />
               }
               @if (visibleEmployees().length === 0) {
-                <p class="text-muted-foreground py-4 text-center text-sm">No hay empleados.</p>
+                <p class="text-muted-foreground py-4 text-center text-sm">No employees found.</p>
               }
             </div>
           </div>
@@ -174,24 +174,28 @@
       </aside>
 
       <main class="min-w-0 space-y-3">
-        <div class="text-muted-foreground flex flex-wrap gap-4 px-1 text-xs">
-          <span><i class="mr-1 inline-block size-2 rounded-full bg-secondary"></i>Cubierto</span
+        <div class="text-muted-foreground flex flex-wrap items-center gap-4 px-1 text-xs">
+          <span><i class="mr-1 inline-block size-2 rounded-full bg-secondary"></i>Covered</span
           ><span
-            ><i class="mr-1 inline-block size-2 rounded-full bg-yellow-400"></i>Falta personal</span
+            ><i class="mr-1 inline-block size-2 rounded-full bg-yellow-400"></i>Understaffed</span
           ><span
             ><i class="mr-1 inline-block size-2 rounded-full bg-destructive"></i
-            >Incompatibilidad</span
+            >Position mismatch</span
           >
+          <app-planning-issues-sheet
+            [issues]="warningIssues()"
+            [employeeNames]="employeeNames()"
+          />
         </div>
         <div hlmTableContainer class="rounded-xl border bg-card">
           <table hlmTable class="w-full min-w-[58rem] table-fixed">
             <caption class="sr-only">
-              Cuadrante semanal por zona y turno
+              Weekly schedule by zone and shift
             </caption>
             <thead hlmTableHeader>
               <tr hlmTableRow>
                 <th hlmTableHead class="sticky left-0 z-10 w-40 min-w-40 bg-card">
-                  <span class="sr-only">Zona, turno y posiciones necesarias</span>
+                  <span class="sr-only">Zone, shift, and required positions</span>
                 </th>
                 @for (day of days(); track day.isoDate) {
                   <th hlmTableHead class="w-28 min-w-28 px-2 text-center">
@@ -233,7 +237,7 @@
                             class="size-3.5 shrink-0"
                             aria-hidden="true"
                           /><span class="truncate"
-                            >{{ requirement.position.name }} · {{ requirement.minimum }} necesarios</span
+                            >{{ requirement.position.name }} · {{ requirement.minimum }} required</span
                           >
                         </div>
                       }
@@ -277,7 +281,7 @@
               @if (rows().length === 0) {
                 <tr hlmTableRow>
                   <td hlmTableCell colspan="8" class="p-10 text-center text-muted-foreground">
-                    No hay requisitos configurados para mostrar.
+                    No staffing requirements are configured to display.
                   </td>
                 </tr>
               }

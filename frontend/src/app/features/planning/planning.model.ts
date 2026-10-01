@@ -4,6 +4,21 @@ export type AvailabilityStatus = 'available' | 'unavailable' | 'preferred';
 export type TimeOffStatus = 'requested' | 'approved' | 'rejected' | 'cancelled';
 export type TimeBalanceEntryKind = 'accrual' | 'usage' | 'adjustment' | 'carryover';
 
+export interface PlanningIssue {
+  code: string;
+  severity: 'warning' | 'error';
+  message: string;
+  employeeId: string;
+  date: string;
+}
+
+export interface PlanningApiIssue {
+  code: string;
+  severity: PlanningIssue['severity'];
+  assignment: string;
+  message: string;
+}
+
 export interface Contract {
   id: string;
   installation?: string | null;
@@ -142,6 +157,7 @@ export interface PlanningWeekResponse {
   week_start: string;
   week_end: string;
   assignments: PlanningAssignment[];
+  issues?: PlanningApiIssue[];
   requirements?: StaffRequirement[];
   staff_requirements?: StaffRequirement[];
   contracts?: Contract[];

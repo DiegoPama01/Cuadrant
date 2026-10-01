@@ -620,6 +620,7 @@ class PlanningWeekSerializer(serializers.Serializer):
     assignments = serializers.SerializerMethodField()
     requirements = StaffRequirementSerializer(many=True, required=False)
     staff_requirements = StaffRequirementSerializer(many=True, required=False)
+    issues = serializers.ListField(child=serializers.DictField(), required=False)
 
     def get_assignments(self, obj):
         return [
@@ -712,25 +713,10 @@ class PlanningWeekAssignmentWriteSerializer(serializers.Serializer):
         if not employee.active:
             raise serializers.ValidationError({"employee": "Inactive employees cannot be assigned."})
 
-        requirement_query = StaffRequirement.objects.filter(
-            installation=employee.installation,
-            zone=zone,
-            shift=shift,
-            position=position,
-            active=True,
-        ).filter(
-            Q(date=work_date) | Q(date__isnull=True, day_of_week=work_date.weekday())
-        )
-        if not requirement_query.exists():
-            raise serializers.ValidationError({"position": "This position is not required for this zone and shift on this date."})
-
         if work_date < week_start or work_date > week_end:
             raise serializers.ValidationError(
                 {"date": "Date must belong to the selected week."}
             )
-
-        if not self._is_employee_available(employee, shift, work_date):
-            raise serializers.ValidationError({"employee": "Employee is not available for this shift."})
 
         return attrs
 
