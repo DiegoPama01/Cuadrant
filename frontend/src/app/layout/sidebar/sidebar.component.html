@@ -6,12 +6,13 @@
     >
       <hlm-sidebar-header>
         <ul hlmSidebarMenu>
-          <li hlmSidebarMenuItem>
+          <li hlmSidebarMenuItem class="flex items-center gap-2">
             <button
               hlmSidebarMenuButton
               size="lg"
               type="button"
-              [hlmDropdownMenuTrigger]="companyMenu"
+              class="min-w-0 flex-1"
+              [hlmDropdownMenuTrigger]="installationMenu"
             >
               <div
                 class="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg"
@@ -20,7 +21,7 @@
               </div>
               <div class="grid flex-1 text-left text-sm leading-tight">
                 <span class="truncate font-medium">{{ companyName() }}</span>
-                <span class="truncate text-xs">{{ companyPlan() }}</span>
+                <span class="truncate text-xs">{{ activeInstallationName() }}</span>
               </div>
               <ng-icon name="lucideChevronsUpDown" class="ml-auto text-base" />
             </button>
@@ -32,24 +33,30 @@
         <spartan-nav-main [items]="data.navMain" />
       </hlm-sidebar-content>
       <hlm-sidebar-footer>
-        <spartan-nav-user [user]="user()" (logoutRequested)="requestLogout()" />
+        <spartan-nav-user
+          [user]="user()"
+          [canManageCompany]="canManageCompany()"
+          (logoutRequested)="requestLogout()"
+        />
       </hlm-sidebar-footer>
     </hlm-sidebar>
     <ng-content />
   </div>
 </div>
 
-<ng-template #companyMenu>
+<ng-template #installationMenu>
   <hlm-dropdown-menu class="min-w-64 rounded-lg">
-    <hlm-dropdown-menu-label>Switch company</hlm-dropdown-menu-label>
+    <hlm-dropdown-menu-label>Switch installation</hlm-dropdown-menu-label>
     <hlm-dropdown-menu-separator />
-    @for (company of companies(); track company.id) {
-      <button hlmDropdownMenuItem type="button" (click)="selectCompany(company.id)">
+    @for (installation of installations(); track installation.id) {
+      <button hlmDropdownMenuItem type="button" (click)="selectInstallation(installation.id)">
         <div class="grid flex-1 text-left text-sm leading-tight">
-          <span class="truncate font-medium">{{ company.name }}</span>
-          <span class="text-muted-foreground truncate text-xs">{{ company.role }}</span>
+          <span class="truncate font-medium">{{ installation.name }}</span>
+          @if (installation.code) {
+            <span class="text-muted-foreground truncate text-xs">{{ installation.code }}</span>
+          }
         </div>
-        @if (company.id === activeCompanyId()) {
+        @if (installation.id === activeInstallationId()) {
           <ng-icon name="lucideCheck" class="ml-2 text-base" />
         }
       </button>

@@ -1,0 +1,158 @@
+model
+  schema 1.1
+
+type user
+
+type company
+  relations
+    define owner: [user]
+    define admin: [user]
+    define member: [user]
+
+    define can_create_installation: owner or admin
+    define can_manage_company: owner or admin
+
+type installation
+  relations
+    define company: [company]
+
+    define owner: [user]
+    define admin: [user]
+    define manager: [user]
+
+    define can_manage: owner or admin
+    define can_view_planning: owner or admin or manager
+    define can_edit_planning: owner or admin or manager
+
+type employee
+  relations
+    define installation: [installation]
+    define user: [user]
+
+    define can_view: can_view_planning from installation or user
+    define can_edit: can_edit_planning from installation
+    define can_manage: can_manage from installation
+
+type position
+  relations
+    define installation: [installation]
+
+    define can_view: can_view_planning from installation
+    define can_edit: can_edit_planning from installation
+    define can_manage: can_manage from installation
+
+type zone
+  relations
+    define installation: [installation]
+
+    define can_view: can_view_planning from installation
+    define can_edit: can_edit_planning from installation
+    define can_manage: can_manage from installation
+
+type shift
+  relations
+    define installation: [installation]
+
+    define can_view: can_view_planning from installation
+    define can_edit: can_edit_planning from installation
+    define can_manage: can_manage from installation
+
+type contract
+  relations
+    define employee: [employee]
+    define installation: [installation]
+    define created_by: [user]
+
+    define can_view: can_view from employee or can_view_planning from installation or created_by
+    define can_edit: can_edit_planning from installation or created_by
+
+type employee_position
+  relations
+    define employee: [employee]
+    define position: [position]
+    define installation: [installation]
+    define created_by: [user]
+
+    define can_view: can_view from employee or can_view from position or can_view_planning from installation or created_by
+    define can_edit: can_edit_planning from installation or created_by
+
+type employee_zone
+  relations
+    define employee: [employee]
+    define zone: [zone]
+    define installation: [installation]
+    define created_by: [user]
+
+    define can_view: can_view from employee or can_view from zone or can_view_planning from installation or created_by
+    define can_edit: can_edit_planning from installation or created_by
+
+type employee_availability
+  relations
+    define employee: [employee]
+    define installation: [installation]
+    define created_by: [user]
+
+    define can_view: can_view from employee or can_view_planning from installation or created_by
+    define can_edit: user from employee or can_edit_planning from installation or created_by
+
+type employee_availability_exception
+  relations
+    define employee: [employee]
+    define availability: [employee_availability]
+    define installation: [installation]
+    define created_by: [user]
+
+    define can_view: can_view from employee or can_view from availability or can_view_planning from installation or created_by
+    define can_edit: user from employee or can_edit from availability or can_edit_planning from installation or created_by
+
+type employee_time_off
+  relations
+    define employee: [employee]
+    define installation: [installation]
+    define created_by: [user]
+
+    define can_view: can_view from employee or can_view_planning from installation or created_by
+    define can_edit: user from employee or can_edit_planning from installation or created_by
+    define can_approve: can_edit_planning from installation
+
+type time_balance_entry
+  relations
+    define employee: [employee]
+    define installation: [installation]
+    define created_by: [user]
+
+    define can_view: can_view from employee or can_view_planning from installation or created_by
+    define can_edit: can_edit_planning from installation or created_by
+
+type assignment
+  relations
+    define employee: [employee]
+    define position: [position]
+    define zone: [zone]
+    define shift: [shift]
+    define installation: [installation]
+    define created_by: [user]
+
+    define can_view: can_view from employee or can_view_planning from installation or created_by
+    define can_edit: can_edit_planning from installation or created_by
+
+type staff_requirement
+  relations
+    define position: [position]
+    define zone: [zone]
+    define shift: [shift]
+    define installation: [installation]
+    define created_by: [user]
+
+    define can_view: can_view_planning from installation or can_view from position or can_view from zone or created_by
+    define can_edit: can_edit_planning from installation or created_by
+
+type planning
+  relations
+    define installation: [installation]
+    define created_by: [user]
+    define published_by: [user]
+
+    define can_view: can_view_planning from installation or created_by or published_by
+    define can_edit: can_edit_planning from installation or created_by
+    define can_publish: can_edit_planning from installation or created_by

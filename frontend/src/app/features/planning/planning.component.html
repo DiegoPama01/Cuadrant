@@ -1,456 +1,294 @@
-<section class="flex min-w-0 flex-1 flex-col gap-6">
-  <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-    <div class="space-y-1">
+<section class="flex min-w-0 flex-1 flex-col gap-4">
+  <header class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+    <div>
       <p class="text-muted-foreground text-sm font-medium uppercase tracking-[0.2em]">Planning</p>
-      <div>
-        <h1 class="text-3xl font-semibold tracking-tight">Weekly planner</h1>
-        <p class="text-muted-foreground text-sm">
-          Assign a zone and shift to each employee from Monday to Sunday.
-        </p>
-      </div>
+      <h1 class="text-3xl font-semibold tracking-tight">Weekly schedule</h1>
+      <p class="text-muted-foreground text-sm">Drag an employee to any shift.</p>
     </div>
-
-  </div>
-
-  <div class="sr-only" aria-live="polite" aria-atomic="true">
-    @if (exportSuccess(); as message) {
-      {{ message }}
-    }
-    @if (exportError(); as message) {
-      {{ message }}
-    }
-  </div>
-
-  <div class="grid gap-3 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
-    <div></div>
-
-    <div class="flex flex-col items-center gap-2 sm:flex-row sm:items-center sm:gap-3 lg:justify-self-center">
-      <button hlmBtn type="button" variant="outline" size="icon" aria-label="Previous week" (click)="goToPreviousWeek()">
-        <ng-icon name="lucideChevronLeft" class="text-base" />
-      </button>
-      <hlm-date-picker [date]="selectedPlanningDate()" (dateChange)="updateSelectedDateFromPicker($event)">
-        <hlm-date-picker-trigger buttonId="planning-week-date" class="min-w-56 justify-center px-4 text-center">
-          {{ weekRangeLabel() }}
-        </hlm-date-picker-trigger>
-      </hlm-date-picker>
-      <button hlmBtn type="button" variant="outline" size="icon" aria-label="Next week" (click)="goToNextWeek()">
-        <ng-icon name="lucideChevronRight" class="text-base" />
-      </button>
-    </div>
-
-    <div class="flex flex-wrap items-center justify-end gap-3 lg:justify-self-end">
-      <div hlmButtonGroup aria-label="Planning color mode">
-        <button hlmBtn type="button" [variant]="colorMode() === 'zone' ? 'default' : 'outline'" (click)="updateColorMode('zone')">
-          Zones
-        </button>
-        <button hlmBtn type="button" [variant]="colorMode() === 'shift' ? 'default' : 'outline'" (click)="updateColorMode('shift')">
-          Shifts
-        </button>
-      </div>
-
+    <div class="flex items-center gap-2">
       <button
         hlmBtn
-        type="button"
-        variant="outline"
-        class="relative size-10 p-0"
-        aria-label="Open planning filters"
-        [hlmDropdownMenuTrigger]="planningFiltersMenu"
-        align="end"
-      >
-          <ng-icon name="lucideFilter" class="text-base" />
-          @if (hasActiveFilters()) {
-            <span class="bg-primary absolute top-2 right-2 h-2 w-2 rounded-full"></span>
-          }
-      </button>
-
-      <button
-        hlmBtn
-        type="button"
         variant="outline"
         size="icon"
-        class="size-10 p-0"
-        [attr.aria-label]="isExporting() ? 'Exporting week' : 'Export week'"
-        [attr.title]="isExporting() ? 'Exporting week' : 'Export week'"
-        [attr.aria-busy]="isExporting()"
-        [disabled]="isExporting() || planningResource.isLoading() || planningWeekResource.isLoading() || planningRows().length === 0"
-        (click)="exportPlanning()"
+        aria-label="Previous week"
+        (click)="previousWeek()"
       >
-        <ng-icon name="lucideDownload" class="text-base" />
-      </button>
-
-      <button
+        <ng-icon name="lucideChevronLeft" /></button
+      ><hlm-date-picker [date]="weekStart()" (dateChange)="updateDate($event)"
+        ><hlm-date-picker-trigger buttonId="planning-week-date" class="min-w-48 justify-center">{{
+          weekRangeLabel()
+        }}</hlm-date-picker-trigger></hlm-date-picker
+      ><button
         hlmBtn
-        type="button"
         variant="outline"
         size="icon"
-        class="size-10 p-0"
-        aria-label="Refresh planning data"
-        title="Refresh planning data"
-        (click)="reload()"
+        aria-label="Next week"
+        (click)="nextWeek()"
       >
-        <ng-icon name="lucideRefreshCw" class="text-base" />
+        <ng-icon name="lucideChevronRight" />
       </button>
-
-      <ng-template #planningFiltersMenu>
-        <hlm-dropdown-menu>
-          <hlm-dropdown-menu-label>Planning filters</hlm-dropdown-menu-label>
-          <hlm-dropdown-menu-separator />
-
-          <button hlmDropdownMenuItem [hlmDropdownMenuSubTrigger]="positionMenu" align="start" side="right">
-            <span>Position</span>
-            <hlm-dropdown-menu-item-sub-indicator />
-          </button>
-
-          <button hlmDropdownMenuItem [hlmDropdownMenuSubTrigger]="zoneMenu" align="start" side="right">
-            <span>Zone</span>
-            <hlm-dropdown-menu-item-sub-indicator />
-          </button>
-
-          <button hlmDropdownMenuItem [hlmDropdownMenuSubTrigger]="shiftMenu" align="start" side="right">
-            <span>Shift</span>
-            <hlm-dropdown-menu-item-sub-indicator />
-          </button>
-        </hlm-dropdown-menu>
-      </ng-template>
-
-      <ng-template #positionMenu>
-        <hlm-dropdown-menu-sub>
-          <hlm-dropdown-menu-label>Position</hlm-dropdown-menu-label>
-          <hlm-dropdown-menu-separator />
-          <button hlmDropdownMenuRadio [checked]="selectedPositionId() === null" (click)="updatePositionFilter(null)">
-            <hlm-dropdown-menu-radio-indicator />
-            <span>All positions</span>
-          </button>
-          @for (option of positionOptions(); track option.id) {
-            <button hlmDropdownMenuRadio [checked]="selectedPositionId() === option.id" (click)="updatePositionFilter(option.id)">
-              <hlm-dropdown-menu-radio-indicator />
-              <span>{{ option.label }}</span>
-            </button>
-          }
-        </hlm-dropdown-menu-sub>
-      </ng-template>
-
-      <ng-template #zoneMenu>
-        <hlm-dropdown-menu-sub>
-          <hlm-dropdown-menu-label>Zone</hlm-dropdown-menu-label>
-          <hlm-dropdown-menu-separator />
-          <button hlmDropdownMenuRadio [checked]="selectedZoneId() === null" (click)="updateZoneFilter(null)">
-            <hlm-dropdown-menu-radio-indicator />
-            <span>All zones</span>
-          </button>
-          @for (option of zoneFilterOptions(); track option.id) {
-            <button hlmDropdownMenuRadio [checked]="selectedZoneId() === option.id" (click)="updateZoneFilter(option.id)">
-              <hlm-dropdown-menu-radio-indicator />
-              <span>{{ option.label }}</span>
-            </button>
-          }
-        </hlm-dropdown-menu-sub>
-      </ng-template>
-
-      <ng-template #shiftMenu>
-        <hlm-dropdown-menu-sub>
-          <hlm-dropdown-menu-label>Shift</hlm-dropdown-menu-label>
-          <hlm-dropdown-menu-separator />
-          <button hlmDropdownMenuRadio [checked]="selectedShiftId() === null" (click)="updateShiftFilter(null)">
-            <hlm-dropdown-menu-radio-indicator />
-            <span>All shifts</span>
-          </button>
-          @for (option of shiftFilterOptions(); track option.id) {
-            <button hlmDropdownMenuRadio [checked]="selectedShiftId() === option.id" (click)="updateShiftFilter(option.id)">
-              <hlm-dropdown-menu-radio-indicator />
-              <span>{{ option.label }}</span>
-            </button>
-          }
-        </hlm-dropdown-menu-sub>
-      </ng-template>
     </div>
-  </div>
+    <div class="flex items-center gap-2">
+      <button
+        hlmBtn
+        variant="outline"
+        [hlmDropdownMenuTrigger]="planningFilters"
+        aria-label="Filter planning"
+      >
+        <ng-icon name="lucideListFilter" /> Filters</button
+      ><button hlmBtn variant="outline" (click)="exportPlanning()" [disabled]="isExporting()">
+        <ng-icon name="lucideDownload" /> Export
+      </button>
+      @if (isSaving()) {
+        <span class="text-muted-foreground text-xs" aria-live="polite">Saving...</span>
+      } @else if (hasPendingChanges()) {
+        <span class="text-muted-foreground text-xs" aria-live="polite">Unsaved changes</span>
+      }
+      <button hlmBtn variant="outline" size="icon" aria-label="Refresh" (click)="reload()">
+        <ng-icon name="lucideRefreshCw" />
+      </button>
+    </div>
+  </header>
 
-  @if (planningResource.isLoading()) {
-    <hlm-card>
-      <div hlmCardContent class="flex min-h-64 flex-col items-center justify-center gap-3 py-10 text-center">
-        <div class="bg-muted h-10 w-10 animate-pulse rounded-full"></div>
-        <div class="space-y-1">
-          <p class="font-medium">Loading planner</p>
-          <p class="text-muted-foreground text-sm">Fetching employees, zones, shifts, and positions.</p>
-        </div>
-      </div>
-    </hlm-card>
-  } @else if (planningError(); as errorMessage) {
-    <hlm-card>
-      <div hlmCardContent class="flex min-h-64 flex-col items-center justify-center gap-4 py-10 text-center">
-        <div class="space-y-1">
-          <p class="font-medium">Planning is unavailable</p>
-          <p class="text-muted-foreground text-sm" aria-live="polite">{{ errorMessage }}</p>
-        </div>
-
-        <button hlmBtn type="button" variant="outline" (click)="reload()">Retry</button>
-      </div>
-    </hlm-card>
-  } @else if (planningRows().length === 0) {
-    <hlm-card>
-      <div hlmCardContent class="flex min-h-64 flex-col items-center justify-center gap-3 py-10 text-center">
-        <div class="space-y-1">
-          <p class="font-medium">No active employees available</p>
-          <p class="text-muted-foreground text-sm">
-            Add active employees with allowed zones and shifts before planning the week.
-          </p>
-        </div>
-      </div>
-    </hlm-card>
-  } @else if (visibleEmployees().length === 0) {
-    <hlm-card>
-      <div hlmCardContent class="flex min-h-48 flex-col items-center justify-center gap-3 py-10 text-center">
-        <div class="space-y-1">
-          <p class="font-medium">No employees match these filters</p>
-          <p class="text-muted-foreground text-sm">
-            Try another position, zone, or shift to see matching planning rows.
-          </p>
-        </div>
-
-        <button hlmBtn type="button" variant="outline" [disabled]="!hasActiveFilters()" (click)="clearFilters()">
-          Clear filters
+  <ng-template #planningFilters>
+    <hlm-dropdown-menu class="w-64">
+      <hlm-dropdown-menu-label>Filter planning</hlm-dropdown-menu-label>
+      <hlm-dropdown-menu-separator />
+      <button hlmDropdownMenuItem type="button" [hlmDropdownMenuSubTrigger]="zoneFilters">
+        Zone<hlm-dropdown-menu-item-sub-indicator />
+      </button>
+      <button hlmDropdownMenuItem type="button" [hlmDropdownMenuSubTrigger]="positionFilters">
+        Position<hlm-dropdown-menu-item-sub-indicator />
+      </button>
+      <hlm-dropdown-menu-separator />
+      <button
+        hlmDropdownMenuItem
+        type="button"
+        (click)="zoneFilter.set('all'); positionFilter.set('all')"
+      >
+        Clear filters
+      </button>
+    </hlm-dropdown-menu>
+    <ng-template #zoneFilters>
+      <hlm-dropdown-menu-sub>
+        <button
+          hlmDropdownMenuItem
+          type="button"
+          [attr.aria-pressed]="zoneFilter() === 'all'"
+          (click)="zoneFilter.set('all')"
+        >
+          All zones
         </button>
-      </div>
-    </hlm-card>
+        @for (zone of data()?.zones ?? []; track zone.id) {
+          <button
+            hlmDropdownMenuItem
+            type="button"
+            [attr.aria-pressed]="zoneFilter() === zone.id"
+            (click)="zoneFilter.set(zone.id)"
+          >
+            {{ zone.name }}
+          </button>
+        }
+      </hlm-dropdown-menu-sub>
+    </ng-template>
+    <ng-template #positionFilters>
+      <hlm-dropdown-menu-sub>
+        <button
+          hlmDropdownMenuItem
+          type="button"
+          [attr.aria-pressed]="positionFilter() === 'all'"
+          (click)="positionFilter.set('all')"
+        >
+          All positions
+        </button>
+        @for (position of data()?.positions ?? []; track position.id) {
+          <button
+            hlmDropdownMenuItem
+            type="button"
+            [attr.aria-pressed]="positionFilter() === position.id"
+            (click)="positionFilter.set(position.id)"
+          >
+            {{ position.name }}
+          </button>
+        }
+      </hlm-dropdown-menu-sub>
+    </ng-template>
+  </ng-template>
+
+  @if (saveError(); as error) {
+    <p class="text-destructive text-sm" role="alert">{{ error }}</p>
+  }
+  @if (planningResource.isLoading() || planningWeekResource.isLoading()) {
+    <hlm-card
+      ><div hlmCardContent class="p-10 text-center">Loading planning...</div></hlm-card
+    >
+  } @else if (planningResource.error() || planningWeekResource.error()) {
+    <hlm-card
+      ><div hlmCardContent class="flex flex-col items-center gap-3 p-10">
+        <p>Could not load planning.</p>
+        <button hlmBtn variant="outline" (click)="reload()">Retry</button>
+      </div></hlm-card
+    >
   } @else {
-    <div hlmTableContainer class="rounded-xl border bg-card">
-      <table hlmTable class="min-w-[1380px]">
-        <thead hlmTableHeader class="border-b-0">
-          <tr hlmTableRow class="border-b-0">
-            <th hlmTableHead class="sticky left-0 z-10 min-w-56 border-b-0 bg-card">Employee</th>
-            @for (day of planningDays(); track day.isoDate) {
-              <th hlmTableHead class="min-w-40 border-b-0 text-center">
-                <hlm-dialog>
-                  <button
-                    hlmDialogTrigger
-                    hlmBtn
-                    type="button"
-                    variant="ghost"
-                    class="h-auto w-full flex-col gap-0.5 rounded-md px-2 py-1.5"
-                    [attr.aria-label]="'View staffing summary for ' + day.label + ' ' + day.dateLabel"
-                    (click)="resetSummaryFilters()"
+    <div cdkDropListGroup class="grid min-w-0 gap-4 xl:grid-cols-[18rem_minmax(0,1fr)]">
+      <aside class="min-w-0">
+        <hlm-card class="sticky top-4">
+          <div hlmCardHeader class="border-b">
+            <div class="flex items-start justify-between">
+              <div>
+                <h2 hlmCardTitle>Employees</h2>
+                <p hlmCardDescription>{{ visibleStaffCount() }} available</p>
+              </div>
+            </div>
+          </div>
+          <div hlmCardContent class="space-y-3">
+            <input
+              hlmInput
+              type="search"
+              placeholder="Search employees..."
+              aria-label="Search employees"
+              [value]="employeeSearch()"
+              (input)="employeeSearch.set($any($event.target).value)"
+            />
+            <p class="text-muted-foreground rounded-md bg-muted/50 p-2 text-xs">
+              Drag an employee to any shift
+            </p>
+            <div
+              cdkDropList
+              [cdkDropListData]="visibleEmployees()"
+              cdkDropListSortingDisabled
+              class="max-h-[calc(100vh-20rem)] space-y-2 overflow-y-auto"
+            >
+              @for (employee of visibleEmployees(); track employee.id) {
+                <app-planning-employee-card
+                  [employee]="employee"
+                  [positionName]="positionName(employeePositionId(employee))"
+                />
+              }
+              @if (visibleEmployees().length === 0) {
+                <p class="text-muted-foreground py-4 text-center text-sm">No employees found.</p>
+              }
+            </div>
+          </div>
+        </hlm-card>
+      </aside>
+
+      <main class="min-w-0 space-y-3">
+        <div class="text-muted-foreground flex flex-wrap items-center gap-4 px-1 text-xs">
+          <span><i class="mr-1 inline-block size-2 rounded-full bg-secondary"></i>Covered</span
+          ><span
+            ><i class="mr-1 inline-block size-2 rounded-full bg-yellow-400"></i>Understaffed</span
+          ><span
+            ><i class="mr-1 inline-block size-2 rounded-full bg-destructive"></i
+            >Position mismatch</span
+          >
+          <app-planning-issues-sheet
+            [issues]="warningIssues()"
+            [employeeNames]="employeeNames()"
+          />
+        </div>
+        <div hlmTableContainer class="rounded-xl border bg-card">
+          <table hlmTable class="w-full min-w-[58rem] table-fixed">
+            <caption class="sr-only">
+              Weekly schedule by zone and shift
+            </caption>
+            <thead hlmTableHeader>
+              <tr hlmTableRow>
+                <th hlmTableHead class="sticky left-0 z-10 w-40 min-w-40 bg-card">
+                  <span class="sr-only">Zone, shift, and required positions</span>
+                </th>
+                @for (day of days(); track day.isoDate) {
+                  <th hlmTableHead class="w-28 min-w-28 px-2 text-center">
+                    <strong>{{ day.label }}</strong
+                    ><span class="text-muted-foreground block text-xs font-normal">{{
+                      day.dateLabel
+                    }}</span>
+                  </th>
+                }
+              </tr>
+            </thead>
+            <tbody hlmTableBody>
+              @for (row of rows(); track row.id) {
+                <tr hlmTableRow>
+                  <th
+                    hlmTableCell
+                    class="sticky left-0 z-10 w-40 min-w-40 bg-card p-2 text-left align-top"
                   >
-                    <span>{{ day.label }}</span>
-                    <span class="text-muted-foreground text-xs font-normal">{{ day.dateLabel }}</span>
-                  </button>
-
-                  <hlm-dialog-content *hlmDialogPortal="let ctx" class="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
-                    @let summary = getDaySummary(day.isoDate);
-                    <hlm-dialog-header>
-                      <h2 hlmDialogTitle>Staffing for {{ day.label }} {{ day.dateLabel }}</h2>
-                      <p hlmDialogDescription>
-                        {{ summary.assigned }} of {{ planningRows().length }} employees assigned. Use the counts to spot zones with low coverage.
-                      </p>
-                    </hlm-dialog-header>
-
-                    <div class="grid gap-3 sm:grid-cols-3">
-                      <label class="grid gap-1.5 text-sm font-medium">
-                        <span>Zone</span>
-                        <hlm-select
-                          [value]="summaryZoneFilter()"
-                          [itemToString]="summaryZoneToLabel(day.isoDate)"
-                          (valueChange)="summaryZoneFilter.set($event ?? null)"
-                        >
-                          <hlm-select-trigger class="w-full">
-                            <hlm-select-value placeholder="All zones" />
-                          </hlm-select-trigger>
-                          <hlm-select-content *hlmSelectPortal>
-                            <hlm-select-group>
-                              @for (option of getSummaryFilterOptions(day.isoDate, 'zone'); track option.id) {
-                                <hlm-select-item [value]="option.id">{{ option.label }}</hlm-select-item>
-                              }
-                            </hlm-select-group>
-                          </hlm-select-content>
-                        </hlm-select>
-                      </label>
-
-                      <label class="grid gap-1.5 text-sm font-medium">
-                        <span>Position</span>
-                        <hlm-select
-                          [value]="summaryPositionFilter()"
-                          [itemToString]="summaryPositionToLabel(day.isoDate)"
-                          (valueChange)="summaryPositionFilter.set($event ?? null)"
-                        >
-                          <hlm-select-trigger class="w-full">
-                            <hlm-select-value placeholder="All positions" />
-                          </hlm-select-trigger>
-                          <hlm-select-content *hlmSelectPortal>
-                            <hlm-select-group>
-                              @for (option of getSummaryFilterOptions(day.isoDate, 'position'); track option.id) {
-                                <hlm-select-item [value]="option.id">{{ option.label }}</hlm-select-item>
-                              }
-                            </hlm-select-group>
-                          </hlm-select-content>
-                        </hlm-select>
-                      </label>
-
-                      <label class="grid gap-1.5 text-sm font-medium">
-                        <span>Shift</span>
-                        <hlm-select
-                          [value]="summaryShiftFilter()"
-                          [itemToString]="summaryShiftToLabel(day.isoDate)"
-                          (valueChange)="summaryShiftFilter.set($event ?? null)"
-                        >
-                          <hlm-select-trigger class="w-full">
-                            <hlm-select-value placeholder="All shifts" />
-                          </hlm-select-trigger>
-                          <hlm-select-content *hlmSelectPortal>
-                            <hlm-select-group>
-                              @for (option of getSummaryFilterOptions(day.isoDate, 'shift'); track option.id) {
-                                <hlm-select-item [value]="option.id">{{ option.label }}</hlm-select-item>
-                              }
-                            </hlm-select-group>
-                          </hlm-select-content>
-                        </hlm-select>
-                      </label>
+                    <div class="flex items-center gap-1.5 truncate font-medium">
+                      <span
+                        class="size-2.5 shrink-0 rounded-sm"
+                        [style.background-color]="zoneColor(row.preset.zone)"
+                        aria-hidden="true"
+                      ></span
+                      ><span class="truncate">{{ zoneName(row.preset.zone) }}</span>
                     </div>
-
-                    <div class="overflow-hidden rounded-lg border">
-                      <table hlmTable>
-                        <thead hlmTableHeader>
-                          <tr hlmTableRow>
-                            <th hlmTableHead>Zone</th>
-                            <th hlmTableHead>Position</th>
-                            <th hlmTableHead>Shift</th>
-                            <th hlmTableHead class="text-right">Employees</th>
-                          </tr>
-                        </thead>
-                        <tbody hlmTableBody>
-                          @for (item of getFilteredDaySummaryRows(day.isoDate); track item.id) {
-                            <tr hlmTableRow>
-                              <td hlmTableCell>{{ item.zoneName }}</td>
-                              <td hlmTableCell>{{ item.positionName }}</td>
-                              <td hlmTableCell>{{ item.shiftName }}</td>
-                              <td hlmTableCell class="text-right font-semibold">{{ item.count }}</td>
-                            </tr>
-                          }
-                          @if (getFilteredDaySummaryRows(day.isoDate).length === 0) {
-                            <tr hlmTableRow>
-                              <td hlmTableCell colspan="4" class="text-muted-foreground py-8 text-center">
-                                No assignments match these filters.
-                              </td>
-                            </tr>
-                          }
-                        </tbody>
-                      </table>
+                    <div class="text-muted-foreground flex items-center gap-1.5 truncate text-xs">
+                      <ng-icon
+                        name="lucideClock3"
+                        class="size-3.5 shrink-0"
+                        aria-hidden="true"
+                      /><span class="truncate">{{ shiftLabel(row.preset.shift) }}</span>
                     </div>
-
-                    <hlm-dialog-footer>
-                      <button hlmBtn type="button" variant="outline" hlmDialogClose>Close</button>
-                    </hlm-dialog-footer>
-                  </hlm-dialog-content>
-                </hlm-dialog>
-              </th>
-            }
-          </tr>
-        </thead>
-        <tbody hlmTableBody>
-          @for (employee of visibleEmployees(); track employee.id) {
-            <tr hlmTableRow>
-              <td hlmTableCell class="sticky left-0 z-10 bg-card align-top">
-                <div class="space-y-1">
-                  <p class="font-medium">{{ employee.fullName }}</p>
-                  <p class="text-muted-foreground text-xs">{{ employee.positionName }}</p>
-                </div>
-              </td>
-
-              @for (day of planningDays(); track day.isoDate) {
-                <td hlmTableCell class="h-12 p-0 align-top">
-                  <hlm-popover
-                    sideOffset="8"
-                    align="start"
-                    [state]="openPopoverKey() === assignmentKey(employee.id, day.isoDate) ? 'open' : 'closed'"
-                    (stateChanged)="handlePopoverStateChange(assignmentKey(employee.id, day.isoDate), $event, employee.id, day.isoDate)"
-                  >
-                    <button
-                      hlmPopoverTrigger
-                      hlmBtn
-                      type="button"
-                      variant="ghost"
-                      [class]="getCellButtonClass(employee, day.isoDate)"
-                      [attr.style]="getCellSurfaceStyle(employee, day.isoDate)"
-                      (click)="openCellEditor(employee.id, day.isoDate)"
-                    >
-                      @if (getCellSummary(employee, day.isoDate).empty) {
-                        <div class="text-muted-foreground flex h-full w-full items-center justify-center text-sm">+ Assign</div>
-                      } @else {
-                        <div class="flex w-full flex-col justify-center gap-1">
-                          <span class="truncate text-sm font-medium">{{ getCellSummary(employee, day.isoDate).zone }}</span>
-                          <span class="truncate text-xs" [class]="getCellSecondaryTextClass(employee, day.isoDate)">{{ getCellSummary(employee, day.isoDate).shift }}</span>
+                    <div class="mt-1 space-y-0.5">
+                      @for (requirement of row.requirements; track requirement.id) {
+                        <div class="text-muted-foreground flex items-center gap-1.5 truncate text-xs">
+                          <ng-icon
+                            name="lucideUserRound"
+                            class="size-3.5 shrink-0"
+                            aria-hidden="true"
+                          /><span class="truncate"
+                            >{{ requirement.position.name }} · {{ requirement.minimum }} required</span
+                          >
                         </div>
                       }
-                    </button>
-
-                    <hlm-popover-content class="grid w-72 gap-4" *hlmPopoverPortal>
-                      <div class="space-y-4">
-                        <div class="space-y-2">
-                          <label class="text-sm font-medium">Zone</label>
-                          <hlm-select
-                            [value]="cellEditor()?.zoneId"
-                            [itemToString]="zoneToLabel(employee)"
-                            (valueChange)="updateEditorZone($event ?? null)"
-                          >
-                            <hlm-select-trigger class="w-full">
-                              <hlm-select-value placeholder="Zone" />
-                            </hlm-select-trigger>
-                            <hlm-select-content *hlmSelectPortal>
-                              <hlm-select-group>
-                                @for (zone of employee.zones; track zone.id) {
-                                  <hlm-select-item [value]="zone.id">{{ zone.name }}</hlm-select-item>
-                                }
-                              </hlm-select-group>
-                            </hlm-select-content>
-                          </hlm-select>
+                    </div>
+                  </th>
+                  @for (day of days(); track day.isoDate) {
+                    <td hlmTableCell class="w-28 min-w-28 p-1.5 align-top">
+                      <div class="flex h-full min-h-32 flex-col gap-1.5">
+                        <div class="flex items-center justify-between gap-1 px-1 text-xs">
+                          <span class="truncate font-medium">{{
+                            shiftName(row.preset.shift)
+                          }}</span>
+                          @if (coverage(row, day.isoDate) >= requiredCount(row, day.isoDate)) {
+                            <span hlmBadge variant="secondary"
+                              >{{ coverage(row, day.isoDate) }}/{{ requiredCount(row, day.isoDate) }}</span
+                            >
+                          } @else {
+                            <span
+                              hlmBadge
+                              variant="outline"
+                              class="border-yellow-300 bg-yellow-100 text-yellow-900 dark:border-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-200"
+                              >{{ coverage(row, day.isoDate) }}/{{ requiredCount(row, day.isoDate) }}</span
+                            >
+                          }
                         </div>
-
-                        <div class="space-y-2">
-                          <label class="text-sm font-medium">Shift</label>
-                          <hlm-select
-                            [value]="cellEditor()?.shiftId"
-                            [itemToString]="shiftToLabel(employee)"
-                            (valueChange)="updateEditorShift($event ?? null)"
-                          >
-                            <hlm-select-trigger class="w-full">
-                              <hlm-select-value placeholder="Shift" />
-                            </hlm-select-trigger>
-                            <hlm-select-content *hlmSelectPortal>
-                              <hlm-select-group>
-                                @for (shift of employee.shifts; track shift.id) {
-                                  <hlm-select-item [value]="shift.id">{{ shift.name }}</hlm-select-item>
-                                }
-                              </hlm-select-group>
-                            </hlm-select-content>
-                          </hlm-select>
-                        </div>
-
-                        <div class="space-y-2">
-                          <label class="text-sm font-medium">Note</label>
-                          <textarea
-                            class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring min-h-24 w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-                            placeholder="Add details for this assignment"
-                            [value]="cellEditor()?.note ?? ''"
-                            (input)="updateEditorNote(($any($event.target)).value)"
-                          ></textarea>
-                        </div>
+                        <app-planning-drop-zone
+                          class="flex min-h-24 flex-1"
+                          [preset]="row.preset"
+                          [assigned]="assignmentsFor(row, day.isoDate)"
+                          [date]="day.isoDate"
+                          [requiredPositionIds]="requiredPositionIds(row)"
+                          [shiftLabel]="shiftName(row.preset.shift)"
+                          (dropped)="moveEmployee($event, day.isoDate, row.preset)"
+                          (removed)="remove($event, day.isoDate)"
+                        />
                       </div>
-
-                      <div class="flex items-center justify-between gap-2">
-                        <button hlmBtn type="button" variant="ghost" [disabled]="isSaving()" (click)="clearCellAssignment()">
-                          Clear
-                        </button>
-                        <button hlmBtn type="button" [disabled]="isSaving()" (click)="saveCellAssignment()">
-                          {{ isSaving() ? 'Saving...' : 'Save' }}
-                        </button>
-                      </div>
-                    </hlm-popover-content>
-                  </hlm-popover>
-                </td>
+                    </td>
+                  }
+                </tr>
               }
-            </tr>
-          }
-        </tbody>
-      </table>
+              @if (rows().length === 0) {
+                <tr hlmTableRow>
+                  <td hlmTableCell colspan="8" class="p-10 text-center text-muted-foreground">
+                    No staffing requirements are configured to display.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </main>
     </div>
   }
 </section>

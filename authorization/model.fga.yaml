@@ -1,0 +1,297 @@
+name: Cuadrant authorization model
+
+model_file: ./model.fga
+
+tuples:
+  - user: user:alice
+    relation: owner
+    object: company:hotel-group
+
+  - user: user:alice
+    relation: admin
+    object: company:restaurant-group
+
+  - user: company:hotel-group
+    relation: company
+    object: installation:hotel-one
+
+  - user: company:restaurant-group
+    relation: company
+    object: installation:restaurant-one
+
+  - user: user:alice
+    relation: owner
+    object: installation:hotel-one
+
+  - user: user:bob
+    relation: manager
+    object: installation:hotel-one
+
+  - user: installation:hotel-one
+    relation: installation
+    object: employee:employee-one
+
+  - user: user:employee-one
+    relation: user
+    object: employee:employee-one
+
+  - user: installation:hotel-one
+    relation: installation
+    object: position:receptionist
+
+  - user: installation:hotel-one
+    relation: installation
+    object: zone:front-desk
+
+  - user: installation:hotel-one
+    relation: installation
+    object: shift:morning
+
+  - user: employee:employee-one
+    relation: employee
+    object: contract:contract-one
+
+  - user: installation:hotel-one
+    relation: installation
+    object: contract:contract-one
+
+  - user: employee:employee-one
+    relation: employee
+    object: employee_availability:availability-one
+
+  - user: installation:hotel-one
+    relation: installation
+    object: employee_availability:availability-one
+
+  - user: employee_availability:availability-one
+    relation: availability
+    object: employee_availability_exception:availability-exception-one
+
+  - user: installation:hotel-one
+    relation: installation
+    object: employee_availability_exception:availability-exception-one
+
+  - user: employee:employee-one
+    relation: employee
+    object: employee_time_off:time-off-one
+
+  - user: installation:hotel-one
+    relation: installation
+    object: employee_time_off:time-off-one
+
+  - user: employee:employee-one
+    relation: employee
+    object: time_balance_entry:balance-entry-one
+
+  - user: installation:hotel-one
+    relation: installation
+    object: time_balance_entry:balance-entry-one
+
+  - user: employee:employee-one
+    relation: employee
+    object: employee_position:employee-position-one
+
+  - user: position:receptionist
+    relation: position
+    object: employee_position:employee-position-one
+
+  - user: installation:hotel-one
+    relation: installation
+    object: employee_position:employee-position-one
+
+  - user: employee:employee-one
+    relation: employee
+    object: employee_zone:employee-zone-one
+
+  - user: zone:front-desk
+    relation: zone
+    object: employee_zone:employee-zone-one
+
+  - user: installation:hotel-one
+    relation: installation
+    object: employee_zone:employee-zone-one
+
+  - user: employee:employee-one
+    relation: employee
+    object: assignment:assignment-one
+
+  - user: position:receptionist
+    relation: position
+    object: assignment:assignment-one
+
+  - user: zone:front-desk
+    relation: zone
+    object: assignment:assignment-one
+
+  - user: shift:morning
+    relation: shift
+    object: assignment:assignment-one
+
+  - user: installation:hotel-one
+    relation: installation
+    object: assignment:assignment-one
+
+  - user: position:receptionist
+    relation: position
+    object: staff_requirement:staff-requirement-one
+
+  - user: zone:front-desk
+    relation: zone
+    object: staff_requirement:staff-requirement-one
+
+  - user: shift:morning
+    relation: shift
+    object: staff_requirement:staff-requirement-one
+
+  - user: installation:hotel-one
+    relation: installation
+    object: staff_requirement:staff-requirement-one
+
+  - user: installation:hotel-one
+    relation: installation
+    object: planning:planning-week-one
+
+  - user: user:bob
+    relation: created_by
+    object: planning:planning-week-one
+
+  - user: user:alice
+    relation: published_by
+    object: planning:planning-week-one
+
+tests:
+  - name: company_owner
+    check:
+      - user: user:alice
+        object: company:hotel-group
+        assertions:
+          can_create_installation: true
+          can_manage_company: true
+
+  - name: company_admin
+    check:
+      - user: user:alice
+        object: company:restaurant-group
+        assertions:
+          can_create_installation: true
+          can_manage_company: true
+
+  - name: installation_owner
+    check:
+      - user: user:alice
+        object: installation:hotel-one
+        assertions:
+          can_manage: true
+          can_view_planning: true
+          can_edit_planning: true
+
+  - name: installation_manager
+    check:
+      - user: user:bob
+        object: installation:hotel-one
+        assertions:
+          can_manage: false
+          can_view_planning: true
+          can_edit_planning: true
+
+  - name: tenant_isolation
+    check:
+      - user: user:bob
+        object: installation:restaurant-one
+        assertions:
+          can_manage: false
+          can_view_planning: false
+          can_edit_planning: false
+
+      - user: user:bob
+        object: company:restaurant-group
+        assertions:
+          can_create_installation: false
+          can_manage_company: false
+
+  - name: employee_resource_self_access
+    check:
+      - user: user:employee-one
+        object: employee:employee-one
+        assertions:
+          can_view: true
+          can_edit: false
+
+      - user: user:employee-one
+        object: employee_availability:availability-one
+        assertions:
+          can_view: true
+          can_edit: true
+
+      - user: user:employee-one
+        object: employee_time_off:time-off-one
+        assertions:
+          can_view: true
+          can_edit: true
+          can_approve: false
+
+  - name: manager_can_operate_planning_entities
+    check:
+      - user: user:bob
+        object: contract:contract-one
+        assertions:
+          can_view: true
+          can_edit: true
+
+      - user: user:bob
+        object: employee_position:employee-position-one
+        assertions:
+          can_view: true
+          can_edit: true
+
+      - user: user:bob
+        object: employee_zone:employee-zone-one
+        assertions:
+          can_view: true
+          can_edit: true
+
+      - user: user:bob
+        object: employee_availability_exception:availability-exception-one
+        assertions:
+          can_view: true
+          can_edit: true
+
+      - user: user:bob
+        object: time_balance_entry:balance-entry-one
+        assertions:
+          can_view: true
+          can_edit: true
+
+      - user: user:bob
+        object: assignment:assignment-one
+        assertions:
+          can_view: true
+          can_edit: true
+
+      - user: user:bob
+        object: staff_requirement:staff-requirement-one
+        assertions:
+          can_view: true
+          can_edit: true
+
+      - user: user:bob
+        object: planning:planning-week-one
+        assertions:
+          can_view: true
+          can_edit: true
+          can_publish: true
+
+  - name: planning_entities_tenant_isolation
+    check:
+      - user: user:bob
+        object: planning:restaurant-week-one
+        assertions:
+          can_view: false
+          can_edit: false
+          can_publish: false
+
+      - user: user:bob
+        object: assignment:restaurant-assignment-one
+        assertions:
+          can_view: false
+          can_edit: false

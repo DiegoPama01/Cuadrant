@@ -2,23 +2,134 @@
   <div hlmCardContent class="pt-6">
     <form [formRoot]="zoneForm">
       <hlm-field-group class="space-y-6">
-        <hlm-field>
-          <label hlmFieldLabel for="zone-name">Name</label>
-          <input hlmInput id="zone-name" type="text" placeholder="Front desk" [formField]="zoneForm.name" />
-          @for (error of zoneForm.name().errors(); track error) {
-            <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
-          }
-        </hlm-field>
+        <div class="grid gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+          <hlm-field>
+            <label hlmFieldLabel for="zone-name">Name</label>
+            <input hlmInput id="zone-name" type="text" placeholder="Front desk" [formField]="zoneForm.name" />
+            @for (error of zoneForm.name().errors(); track error) {
+              <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
+            }
+          </hlm-field>
+
+          <hlm-field>
+            <label hlmFieldLabel for="zone-color">Color</label>
+            <div class="flex items-center gap-3">
+              <input hlmInput id="zone-color" type="color" class="h-11 w-16 shrink-0 p-1" [formField]="zoneForm.color" />
+              <code class="text-muted-foreground text-sm">{{ zoneForm.color().value() }}</code>
+            </div>
+            @for (error of zoneForm.color().errors(); track error) {
+              <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
+            }
+          </hlm-field>
+        </div>
+
+        <div class="grid gap-6 md:grid-cols-2">
+          <hlm-field>
+            <label hlmFieldLabel for="zone-code">Code</label>
+            <input hlmInput id="zone-code" type="text" placeholder="FD" [formField]="zoneForm.code" />
+          </hlm-field>
+
+          <hlm-field>
+            <label hlmFieldLabel for="zone-sort-order">Sort order</label>
+            <input hlmInput id="zone-sort-order" type="number" [formField]="zoneForm.sort_order" />
+          </hlm-field>
+        </div>
 
         <hlm-field>
-          <label hlmFieldLabel for="zone-color">Color</label>
-          <div class="flex items-center gap-3">
-            <input hlmInput id="zone-color" type="color" class="h-11 w-16 shrink-0 p-1" [formField]="zoneForm.color" />
-            <code class="text-muted-foreground text-sm">{{ zoneForm.color().value() }}</code>
+          <label hlmFieldLabel for="zone-description">Description</label>
+          <textarea hlmTextarea id="zone-description" placeholder="Where this work area is located" [formField]="zoneForm.description"></textarea>
+        </hlm-field>
+
+        <div class="flex items-center gap-3 rounded-lg px-4 py-3">
+          <div>
+            <p class="text-sm font-medium">Active zone</p>
+            <p class="text-muted-foreground text-xs">Available for planning assignments</p>
           </div>
-          @for (error of zoneForm.color().errors(); track error) {
-            <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
-          }
+          <hlm-switch [checked]="model().active" (checkedChange)="updateActive($event)" />
+        </div>
+
+        <hlm-field>
+          <label hlmFieldLabel>Shifts configured for this zone</label>
+          <div class="grid gap-3 md:grid-cols-[minmax(12rem,0.8fr)_minmax(18rem,1.2fr)]">
+            <app-selection-table
+              [items]="shiftOptions()"
+              [selectedIds]="selectedShiftIds()"
+              title="Configured shifts"
+              placeholder="Search shifts..."
+              removeLabel="Remove"
+              (selected)="addExistingShift($event)"
+              (activated)="selectShift($event.id)"
+              (removed)="removeSelectedShift($event)"
+            >
+              <hlm-dialog selection-table-create>
+                <button hlmDialogTrigger hlmBtn type="button" size="sm" aria-label="Add shift">+ New shift</button>
+                <hlm-dialog-content *hlmDialogPortal="let ctx" class="sm:max-w-xl">
+                  <hlm-dialog-header>
+                    <h2 hlmDialogTitle>New shift</h2>
+                    <p hlmDialogDescription>Create a reusable time interval.</p>
+                  </hlm-dialog-header>
+                  <div class="grid gap-4">
+                    <label hlmFieldLabel for="new-shift-name">Name</label>
+                    <input hlmInput id="new-shift-name" [value]="newShift().name" (input)="updateNewShiftName($event)" />
+                    <div class="grid gap-4 sm:grid-cols-2">
+                      <label hlmFieldLabel for="new-shift-start">Start time</label>
+                      <input hlmInput id="new-shift-start" type="time" [value]="newShift().start_time" (input)="updateNewShiftStart($event)" />
+                      <label hlmFieldLabel for="new-shift-end">End time</label>
+                      <input hlmInput id="new-shift-end" type="time" [value]="newShift().end_time" (input)="updateNewShiftEnd($event)" />
+                    </div>
+                    <label hlmFieldLabel for="new-shift-break-minutes">Break minutes</label>
+                    <input hlmInput id="new-shift-break-minutes" type="number" min="0" [value]="newShift().break_minutes" (input)="updateNewShiftBreakMinutes($event)" />
+                    <label hlmFieldLabel for="new-shift-color">Color</label>
+                    <input hlmInput id="new-shift-color" type="color" class="h-10 w-16 p-1" [value]="newShift().color" (input)="updateNewShiftColor($event)" />
+                  </div>
+                  @if (createError(); as errorMessage) { <p class="text-sm text-red-600" aria-live="polite">{{ errorMessage }}</p> }
+                  <hlm-dialog-footer>
+                    <button hlmBtn type="button" variant="outline" hlmDialogClose>Cancel</button>
+                    <button hlmBtn type="button" hlmDialogClose (click)="saveNewShift()">Create shift</button>
+                  </hlm-dialog-footer>
+                </hlm-dialog-content>
+              </hlm-dialog>
+            </app-selection-table>
+
+            @if (activeShift(); as selectedShift) {
+                <app-selection-table
+                  [items]="positionOptions()"
+                  [selectedIds]="selectedPositionIds()"
+                  [showQuantity]="true"
+                  [quantities]="positionQuantities()"
+                  title="Positions"
+                  quantityLabel="Employees"
+                  placeholder="Search positions..."
+                  removeLabel="Remove"
+                  (selected)="addPosition($event.id)"
+                  (removed)="removePosition($event.id)"
+                  (quantityChanged)="updatePositionQuantity($event)"
+                >
+                  <hlm-dialog selection-table-create>
+                    <button hlmDialogTrigger hlmBtn type="button" size="sm">+ New position</button>
+                    <hlm-dialog-content *hlmDialogPortal="let ctx" class="sm:max-w-xl">
+                      <hlm-dialog-header>
+                        <h2 hlmDialogTitle>New position</h2>
+                        <p hlmDialogDescription>Create a position and add it to this shift.</p>
+                      </hlm-dialog-header>
+                      <div class="grid gap-4">
+                        <label hlmFieldLabel for="new-position-name">Name</label>
+                        <input hlmInput id="new-position-name" [value]="newPosition().name" (input)="updateNewPositionName($event)" />
+                        <label hlmFieldLabel for="new-position-color">Color</label>
+                        <input hlmInput id="new-position-color" type="color" class="h-10 w-16 p-1" [value]="newPosition().color" (input)="updateNewPositionColor($event)" />
+                      </div>
+                      @if (createError(); as errorMessage) { <p class="text-sm text-red-600" aria-live="polite">{{ errorMessage }}</p> }
+                      <hlm-dialog-footer>
+                        <button hlmBtn type="button" variant="outline" hlmDialogClose>Cancel</button>
+                        <button hlmBtn type="button" hlmDialogClose (click)="saveNewPosition()">Create position</button>
+                      </hlm-dialog-footer>
+                    </hlm-dialog-content>
+                  </hlm-dialog>
+                </app-selection-table>
+            } @else {
+              <p class="text-muted-foreground rounded-md border border-dashed p-4 text-sm">Select a shift to configure its required positions.</p>
+            }
+          </div>
         </hlm-field>
 
         @if (formError(); as errorMessage) {
@@ -26,7 +137,7 @@
         }
 
         <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <button hlmBtn type="button" variant="outline" (click)="cancel()" [disabled]="zoneForm().submitting()">Cancel</button>
+          <button hlmBtn type="button" variant="outline" (click)="cancel()">Cancel</button>
           <button hlmBtn type="submit" [disabled]="zoneForm().submitting()">{{ submitLabel() }}</button>
         </div>
       </hlm-field-group>

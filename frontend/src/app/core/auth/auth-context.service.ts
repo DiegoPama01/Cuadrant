@@ -4,6 +4,7 @@ import { CompanyMembership, User } from './auth.model';
 interface PersistedAuthContext {
   currentUser: User | null;
   activeCompany: CompanyMembership | null;
+  activeInstallationId: string | null;
 }
 
 @Injectable({
@@ -14,6 +15,7 @@ export class AuthContextService {
 
   readonly currentUser: WritableSignal<User | null> = signal<User | null>(null);
   readonly activeCompany: WritableSignal<CompanyMembership | null> = signal<CompanyMembership | null>(null);
+  readonly activeInstallationId: WritableSignal<string | null> = signal<string | null>(null);
 
   hydrate(): void {
     const persistedContext = this.readPersistedContext();
@@ -24,6 +26,7 @@ export class AuthContextService {
 
     this.currentUser.set(persistedContext.currentUser);
     this.activeCompany.set(persistedContext.activeCompany);
+    this.activeInstallationId.set(persistedContext.activeInstallationId);
   }
 
   setSession(user: User, activeCompany?: CompanyMembership | null): void {
@@ -31,17 +34,25 @@ export class AuthContextService {
 
     this.currentUser.set(user);
     this.activeCompany.set(resolvedCompany);
+    this.activeInstallationId.set(null);
     this.persist();
   }
 
   setActiveCompany(company: CompanyMembership | null): void {
     this.activeCompany.set(company);
+    this.activeInstallationId.set(null);
+    this.persist();
+  }
+
+  setActiveInstallationId(installationId: string | null): void {
+    this.activeInstallationId.set(installationId);
     this.persist();
   }
 
   clear(): void {
     this.currentUser.set(null);
     this.activeCompany.set(null);
+    this.activeInstallationId.set(null);
     localStorage.removeItem(this.storageKey);
   }
 
@@ -49,6 +60,7 @@ export class AuthContextService {
     const payload: PersistedAuthContext = {
       currentUser: this.currentUser(),
       activeCompany: this.activeCompany(),
+      activeInstallationId: this.activeInstallationId(),
     };
 
     localStorage.setItem(this.storageKey, JSON.stringify(payload));
@@ -67,6 +79,7 @@ export class AuthContextService {
       return {
         currentUser: parsedValue.currentUser ?? null,
         activeCompany: parsedValue.activeCompany ?? null,
+        activeInstallationId: parsedValue.activeInstallationId ?? null,
       };
     } catch {
       localStorage.removeItem(this.storageKey);

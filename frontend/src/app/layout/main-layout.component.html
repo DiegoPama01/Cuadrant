@@ -1,10 +1,11 @@
 <app-sidebar
-  [companies]="companies()"
-  [activeCompanyId]="activeCompanyId()"
   [companyName]="companyName()"
   [companyPlan]="companyPlan()"
+  [installations]="installations()"
+  [activeInstallationId]="activeInstallationId()"
+  [canManageCompany]="canManageCompany()"
   [user]="sidebarUser()"
-  (companySelected)="selectCompany($event)"
+  (installationSelected)="selectInstallation($event)"
   (logoutRequested)="logout()"
 >
   <app-header header />

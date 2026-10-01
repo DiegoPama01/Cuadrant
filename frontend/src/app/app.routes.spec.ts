@@ -21,6 +21,12 @@ describe('application routes', () => {
       pathMatch: 'full',
       redirectTo: 'planning',
     });
-    expect(settingsChildren.map((route) => route.path)).toEqual(['positions', 'zones', 'shifts']);
+    expect(settingsChildren.map((route) => route.path)).toEqual([
+      'company',
+      'installations',
+      'positions',
+      'zones',
+      'shifts',
+    ]);
   });
 });

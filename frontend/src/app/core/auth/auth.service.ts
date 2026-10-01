@@ -45,6 +45,7 @@ export class AuthService {
 
   currentUser = this.authContext.currentUser;
   activeCompany = this.authContext.activeCompany;
+  activeInstallationId = this.authContext.activeInstallationId;
 
   constructor() {
     this.scheduleStoredTokenRefresh();
@@ -159,6 +160,10 @@ export class AuthService {
 
   setActiveCompany(company: CompanyMembership | null): void {
     this.authContext.setActiveCompany(company);
+  }
+
+  setActiveInstallationId(installationId: string | null): void {
+    this.authContext.setActiveInstallationId(installationId);
   }
 
   refreshAccessToken(): Observable<string> {

@@ -17,7 +17,11 @@
       [submitLabel]="isEditMode ? 'Save changes' : 'Create zone'"
       [formError]="formError()"
       [submitForm]="saveZone.bind(this)"
-      [cancel]="goBack.bind(this)"
+      cancelLink="/settings/zones"
+      [shifts]="shifts()"
+      [positions]="positions()"
+      [createShift]="createShift.bind(this)"
+      [createPosition]="createPosition.bind(this)"
     />
   }
 </section>

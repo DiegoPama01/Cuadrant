@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, resource, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { randomFormColor } from '../../shared/color-utils';
+import { CompanyService } from '../../core/company/company.service';
 import { ShiftsFormComponent } from './shifts-form.component';
 import { ShiftUpsertPayload } from './shifts.model';
 import { ShiftsService } from './shifts.service';
@@ -15,6 +17,7 @@ export class ShiftsFormPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly shiftsService = inject(ShiftsService);
+  private readonly companyService = inject(CompanyService);
 
   private readonly shiftId = this.route.snapshot.paramMap.get('id');
   protected readonly isEditMode = this.shiftId !== null;
@@ -36,17 +39,27 @@ export class ShiftsFormPageComponent {
     if (!shift) {
       return {
         name: '',
+        installation: this.companyService.getActiveInstallationId() ?? undefined,
+        code: '',
         start_time: '',
         end_time: '',
-        color: '#0f172a',
+        break_minutes: 0,
+        color: randomFormColor(),
+        sort_order: 0,
+        active: true,
       };
     }
 
     return {
+      installation: shift.installation ?? undefined,
       name: shift.name,
+      code: shift.code ?? '',
       start_time: shift.start_time,
       end_time: shift.end_time,
+      break_minutes: shift.break_minutes ?? 0,
       color: shift.color,
+      sort_order: shift.sort_order ?? 0,
+      active: shift.active ?? true,
     };
   });
 
@@ -66,7 +79,4 @@ export class ShiftsFormPageComponent {
     }
   }
 
-  protected async goBack(): Promise<void> {
-    await this.router.navigate(['/settings/shifts']);
-  }
 }

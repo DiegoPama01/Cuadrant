@@ -1,0 +1,90 @@
+<section class="flex min-w-0 flex-1 flex-col gap-6">
+  <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+    <div class="space-y-1">
+      <p class="text-muted-foreground text-sm font-medium uppercase tracking-[0.2em]">Company</p>
+      <div>
+        <h1 class="text-3xl font-semibold tracking-tight">Installations</h1>
+        <p class="text-muted-foreground text-sm">Manage sites, restaurants, hotels or areas that have independent planning.</p>
+      </div>
+    </div>
+
+    @if (canManage()) {
+      <button hlmBtn type="button" routerLink="new">New installation</button>
+    }
+  </div>
+
+  @if (installationsResource.isLoading()) {
+    <hlm-card><div hlmCardContent class="flex min-h-64 items-center justify-center py-10">Loading installations...</div></hlm-card>
+  } @else if (installationsError(); as errorMessage) {
+    <hlm-card>
+      <div hlmCardContent class="flex min-h-64 flex-col items-center justify-center gap-4 py-10 text-center">
+        <p class="text-sm" aria-live="polite">{{ errorMessage }}</p>
+        <button hlmBtn type="button" variant="outline" (click)="reload()">Retry</button>
+      </div>
+    </hlm-card>
+  } @else if (installations().length === 0) {
+    <hlm-card>
+      <div hlmCardContent class="flex min-h-64 flex-col items-center justify-center gap-3 py-10 text-center">
+        <p class="font-medium">No installations yet</p>
+        <p class="text-muted-foreground text-sm">Create an installation before assigning employees, positions, zones and shifts to a site.</p>
+        @if (canManage()) {
+          <button hlmBtn type="button" routerLink="new">Create first installation</button>
+        }
+      </div>
+    </hlm-card>
+  } @else {
+    <div hlmTableContainer class="rounded-lg border bg-card">
+      <table hlmTable class="min-w-[820px]">
+        <thead hlmTableHeader>
+          <tr hlmTableRow>
+            <th hlmTableHead>Name</th>
+            <th hlmTableHead>Code</th>
+            <th hlmTableHead>Timezone</th>
+            <th hlmTableHead>Status</th>
+            <th hlmTableHead class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody hlmTableBody>
+          @for (installation of installations(); track installation.id) {
+            <tr hlmTableRow>
+              <td hlmTableCell class="font-medium">
+                <div class="flex items-center gap-2">
+                  {{ installation.name }}
+                  @if (installation.id === activeInstallationId()) {
+                    <span hlmBadge>Active</span>
+                  }
+                </div>
+                @if (installation.address) {
+                  <p class="text-muted-foreground text-xs">{{ installation.address }}</p>
+                }
+              </td>
+              <td hlmTableCell>{{ installation.code || '—' }}</td>
+              <td hlmTableCell>{{ installation.timezone || 'Company default' }}</td>
+              <td hlmTableCell>{{ installation.active === false ? 'Inactive' : 'Active' }}</td>
+              <td hlmTableCell class="text-right">
+                <div class="flex justify-end gap-2">
+                  @if (canManage()) {
+                    <button hlmBtn type="button" variant="outline" size="sm" [routerLink]="[installation.id, 'edit']">Edit</button>
+                    <hlm-alert-dialog>
+                      <button hlmAlertDialogTrigger hlmBtn type="button" variant="destructive" size="sm" [disabled]="isDeleting(installation.id)">Delete</button>
+                      <hlm-alert-dialog-content *hlmAlertDialogPortal>
+                        <hlm-alert-dialog-header>
+                          <h2 hlmAlertDialogTitle>Delete installation?</h2>
+                          <p hlmAlertDialogDescription>This will permanently remove <span class="font-medium">{{ installation.name }}</span>.</p>
+                        </hlm-alert-dialog-header>
+                        <hlm-alert-dialog-footer>
+                          <button hlmAlertDialogCancel type="button">Cancel</button>
+                          <button hlmAlertDialogAction type="button" variant="destructive" [disabled]="isDeleting(installation.id)" (click)="deleteInstallation(installation.id)">Delete</button>
+                        </hlm-alert-dialog-footer>
+                      </hlm-alert-dialog-content>
+                    </hlm-alert-dialog>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

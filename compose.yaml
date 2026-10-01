@@ -1,17 +1,16 @@
+name: cuadrant
+
 services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile.prod
-    container_name: planning-app-backend-prod
-    restart: unless-stopped
     env_file:
       - .env
     expose:
       - "8000"
+    restart: unless-stopped
     networks:
-      - planning_prod_net
-      - infra
+      - planning_net
 
   frontend:
     build:
@@ -26,18 +25,14 @@ services:
         FRONTEND_PUBLIC_AUTH_POST_LOGOUT_REDIRECT_URI: ${FRONTEND_PUBLIC_AUTH_POST_LOGOUT_REDIRECT_URI}
         FRONTEND_PUBLIC_AUTH_SCOPES: ${FRONTEND_PUBLIC_AUTH_SCOPES}
         FRONTEND_PUBLIC_AUTH_RESPONSE_TYPE: ${FRONTEND_PUBLIC_AUTH_RESPONSE_TYPE}
-    container_name: planning-app-frontend-prod
-    restart: unless-stopped
+    expose:
+      - "8080"
     depends_on:
       - backend
-    expose:
-      - "80"
+    restart: unless-stopped
     networks:
-      - planning_prod_net
-      - infra
+      - planning_net
 
 networks:
-  planning_prod_net:
+  planning_net:
     driver: bridge
-  infra:
-    external: true

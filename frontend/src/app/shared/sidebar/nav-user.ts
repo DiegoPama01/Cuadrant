@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
 	lucideBadgeCheck,
@@ -6,6 +7,7 @@ import {
 	lucideChevronsUpDown,
 	lucideCreditCard,
 	lucideLogOut,
+	lucideSettings,
 	lucideSparkles,
 } from '@ng-icons/lucide';
 import { HlmAvatarImports } from '@spartan-ng/helm/avatar';
@@ -14,7 +16,7 @@ import { HlmSidebarImports, HlmSidebarService } from '@spartan-ng/helm/sidebar';
 
 @Component({
 	selector: 'spartan-nav-user',
-	imports: [HlmSidebarImports, HlmAvatarImports, NgIcon, HlmDropdownMenuImports],
+	imports: [RouterLink, HlmSidebarImports, HlmAvatarImports, NgIcon, HlmDropdownMenuImports],
 	providers: [
 		provideIcons({
 			lucideChevronsUpDown,
@@ -22,6 +24,7 @@ import { HlmSidebarImports, HlmSidebarService } from '@spartan-ng/helm/sidebar';
 			lucideBadgeCheck,
 			lucideCreditCard,
 			lucideBell,
+			lucideSettings,
 			lucideLogOut,
 		}),
 	],
@@ -67,6 +70,12 @@ import { HlmSidebarImports, HlmSidebarService } from '@spartan-ng/helm/sidebar';
 				</hlm-dropdown-menu-group>
 				<hlm-dropdown-menu-separator />
 				<hlm-dropdown-menu-group>
+					@if (canManageCompany()) {
+						<a hlmDropdownMenuItem routerLink="/settings/company">
+							<ng-icon name="lucideSettings" />
+							Company settings
+						</a>
+					}
 					<button hlmDropdownMenuItem>
 						<ng-icon name="lucideBadgeCheck" />
 						Account
@@ -98,5 +107,6 @@ export class NavUser {
 		email: string;
 		avatar: string;
 	}>();
+	public readonly canManageCompany = input(false);
 	public readonly logoutRequested = output<void>();
 }

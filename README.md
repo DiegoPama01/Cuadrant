@@ -4,8 +4,8 @@
 
 1. Copia `.env.example` a `.env`.
 2. Rellena `.env` con la URL real de PostgreSQL y la configuracion real de Authentik del VPS.
-3. Abre el tunel SSH a PostgreSQL y levanta `backend` y `frontend` con el metodo que prefieras.
-4. Ejecuta migraciones en el backend con `python manage.py migrate`.
+3. Levanta el entorno local con `docker compose -f compose.yaml -f compose.local.yaml up --build -d`.
+4. Ejecuta migraciones con `docker compose -f compose.yaml -f compose.local.yaml exec backend python manage.py migrate`.
 5. Si necesitas un usuario admin: `python manage.py createsuperuser`.
 
 Datos conocidos del despliegue actual:
@@ -16,30 +16,24 @@ Datos conocidos del despliegue actual:
 
 ## Arquitectura esperada
 
-- Este proyecto ya no levanta PostgreSQL ni Authentik en local.
-- `backend` debe conectarse a la base de datos remota usando `DATABASE_URL` o `POSTGRES_*`.
-- Para Docker Desktop, `docker-compose.dev.yml` conecta el backend a PostgreSQL mediante `host.docker.internal`.
+- El Compose local levanta PostgreSQL; Authentik y OpenFGA se mantienen como servicios externos.
+- `backend` usa el servicio `db` en local y `DATABASE_URL` o `POSTGRES_*` en produccion.
 - `frontend` debe apuntar al backend real mediante `FRONTEND_PUBLIC_API_BASE_URL`.
 - Si activas OIDC, tanto backend como frontend deben usar las URLs publicas reales de Authentik.
 - `frontend/public/app-config.json` se genera desde `.env` en cada arranque o build del frontend.
 - Si la base de datos solo acepta acceso por SSH, primero debes abrir un tunel al VPS por el puerto `22`.
 
-### Desarrollo con Docker y datos de produccion
+### Desarrollo con Docker
 
-Abre una terminal y deja activo el tunel:
-
-```powershell
-ssh -N -o ExitOnForwardFailure=yes -L 0.0.0.0:5432:127.0.0.1:5432 ubuntu@198.244.150.237
-```
-
-En otra terminal, desde la raiz del proyecto, levanta el backend:
+Desde la raiz del proyecto:
 
 ```powershell
-docker compose -f docker-compose.dev.yml up --build -d backend
-docker compose -f docker-compose.dev.yml logs -f backend
+docker compose -f compose.yaml -f compose.local.yaml up --build -d
+docker compose -f compose.yaml -f compose.local.yaml logs -f backend
 ```
 
-El frontend se levanta desde `frontend` con `npm start`. No se inicia ningun PostgreSQL local.
+El frontend queda disponible en `http://localhost:4200`, el backend en `http://localhost:8000`
+y PostgreSQL permanece en la red interna del Compose.
 
 ## Backend
 
@@ -79,15 +73,15 @@ Desde la raiz del proyecto, con el `.env` de produccion configurado:
 
 ```bash
 docker network inspect infra >/dev/null 2>&1 || docker network create infra
-docker compose -f docker-compose.prod.yml build
-docker compose -f docker-compose.prod.yml run --rm backend python manage.py migrate
-docker compose -f docker-compose.prod.yml up -d
+docker compose -f compose.yaml -f compose.prod.yaml build
+docker compose -f compose.yaml -f compose.prod.yaml run --rm backend python manage.py migrate
+docker compose -f compose.yaml -f compose.prod.yaml up -d
 ```
 
 Para aplicar cambios posteriores de codigo o variables de entorno:
 
 ```bash
-docker compose -f docker-compose.prod.yml up -d --build --force-recreate
+docker compose -f compose.yaml -f compose.prod.yaml up -d --build --force-recreate
 ```
 
 No uses `docker compose down -v` en produccion. La base de datos es externa al compose,

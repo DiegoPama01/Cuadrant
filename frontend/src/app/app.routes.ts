@@ -74,6 +74,52 @@ export const routes: Routes = [
         },
         children: [
           {
+            path: 'company',
+            data: {
+              breadcrumb: 'Company',
+            },
+            loadComponent: () =>
+              import('./features/company/company-settings.component').then(
+                (m) => m.CompanySettingsComponent,
+              ),
+          },
+          {
+            path: 'installations',
+            data: {
+              breadcrumb: 'Installations',
+            },
+            children: [
+              {
+                path: '',
+                pathMatch: 'full',
+                loadComponent: () =>
+                  import('./features/company/installations.component').then(
+                    (m) => m.InstallationsComponent,
+                  ),
+              },
+              {
+                path: 'new',
+                data: {
+                  breadcrumb: 'New',
+                },
+                loadComponent: () =>
+                  import('./features/company/installation-form-page.component').then(
+                    (m) => m.InstallationFormPageComponent,
+                  ),
+              },
+              {
+                path: ':id/edit',
+                data: {
+                  breadcrumb: 'Edit',
+                },
+                loadComponent: () =>
+                  import('./features/company/installation-form-page.component').then(
+                    (m) => m.InstallationFormPageComponent,
+                  ),
+              },
+            ],
+          },
+          {
             path: 'positions',
             data: {
               breadcrumb: 'Positions',

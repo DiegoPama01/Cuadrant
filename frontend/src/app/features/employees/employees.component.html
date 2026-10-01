@@ -44,7 +44,7 @@
         <div class="space-y-1">
           <p class="font-medium">No employees yet</p>
           <p class="text-muted-foreground text-sm">
-            Create your first employee to start assigning positions, zones, and shifts.
+            Create your first employee to start assigning positions and availability.
           </p>
         </div>
 
@@ -55,30 +55,31 @@
     </hlm-card>
   } @else {
     <div hlmTableContainer class="rounded-lg border bg-card">
-      <table hlmTable class="min-w-[980px]">
+      <table hlmTable class="min-w-[720px]">
         <thead hlmTableHeader>
           <tr hlmTableRow>
             <th hlmTableHead>Name</th>
             <th hlmTableHead>Status</th>
             <th hlmTableHead>Position</th>
-            <th hlmTableHead>Zones</th>
-            <th hlmTableHead>Shifts</th>
-             <th hlmTableHead class="text-right">Actions</th>
+            <th hlmTableHead class="text-right">Actions</th>
           </tr>
         </thead>
         <tbody hlmTableBody>
           @for (employee of employees(); track employee.id) {
             <tr hlmTableRow>
-              <td hlmTableCell class="font-medium">{{ employee.fullName }}</td>
+              <td hlmTableCell class="font-medium">
+                <div class="flex items-center gap-2">
+                  <span class="size-3 shrink-0 rounded-full border" [style.background-color]="employee.color" [hlmTooltip]="employee.color ? '' + employee.color : 'Sin color asignado'" [attr.aria-label]="employee.color ? 'Color asignado: ' + employee.color : 'Sin color asignado'"></span>
+                  <span>{{ employee.fullName }}</span>
+                </div>
+              </td>
               <td hlmTableCell>
                 <span hlmBadge [variant]="employee.active ? 'default' : 'secondary'">
                   {{ employee.active ? 'Active' : 'Inactive' }}
                 </span>
               </td>
               <td hlmTableCell class="text-muted-foreground">{{ employee.positionName }}</td>
-              <td hlmTableCell class="text-muted-foreground">{{ employee.zonesSummary }}</td>
-              <td hlmTableCell class="text-muted-foreground">{{ employee.shiftsSummary }}</td>
-               <td hlmTableCell class="text-right">
+              <td hlmTableCell class="text-right">
                 <div class="flex justify-end gap-2">
                   <button hlmBtn type="button" variant="outline" size="sm" [routerLink]="[employee.id, 'edit']">Edit</button>
                   <hlm-alert-dialog>

@@ -16,11 +16,10 @@
       [initialValue]="initialValue()"
       [positions]="positions()"
       [zones]="zones()"
-      [shifts]="shifts()"
       [submitLabel]="isEditMode ? 'Save changes' : 'Create employee'"
       [formError]="formError()"
       [submitForm]="saveEmployee.bind(this)"
-      [cancel]="goBack.bind(this)"
+      cancelLink="/employees"
     />
   }
 </section>

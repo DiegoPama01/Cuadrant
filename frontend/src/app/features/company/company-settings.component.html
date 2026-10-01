@@ -1,0 +1,65 @@
+<section class="mx-auto flex w-full max-w-3xl flex-col gap-6">
+  <div class="space-y-1">
+    <p class="text-muted-foreground text-sm font-medium uppercase tracking-[0.2em]">Company</p>
+    <h1 class="text-3xl font-semibold tracking-tight">Company settings</h1>
+    <p class="text-muted-foreground text-sm">Edit the organization data used as default context for planning.</p>
+  </div>
+
+  @if (companyResource.isLoading()) {
+    <hlm-card><div hlmCardContent class="py-10 text-center">Loading company...</div></hlm-card>
+  } @else {
+    <hlm-card>
+      <div hlmCardContent class="pt-6">
+        <form [formRoot]="companyForm">
+          <hlm-field-group class="space-y-6">
+            <hlm-field>
+              <label hlmFieldLabel for="company-name">Name</label>
+              <input hlmInput id="company-name" type="text" placeholder="Company name" [formField]="companyForm.name" />
+              @for (error of companyForm.name().errors(); track error) {
+                <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
+              }
+            </hlm-field>
+
+            <hlm-field>
+              <label hlmFieldLabel for="company-legal-name">Legal name</label>
+              <input hlmInput id="company-legal-name" type="text" placeholder="Legal entity name" [formField]="companyForm.legal_name" />
+            </hlm-field>
+
+            <div class="grid gap-6 md:grid-cols-2">
+              <hlm-field>
+                <label hlmFieldLabel for="company-tax-id">Tax ID</label>
+                <input hlmInput id="company-tax-id" type="text" placeholder="Tax ID" [formField]="companyForm.tax_id" />
+              </hlm-field>
+              <hlm-field>
+                <label hlmFieldLabel for="company-timezone">Timezone</label>
+                <input hlmInput id="company-timezone" type="text" placeholder="Europe/Madrid" [formField]="companyForm.timezone" />
+              </hlm-field>
+            </div>
+
+            <div class="flex items-center gap-3 rounded-lg px-4 py-3">
+              <div>
+                <p class="text-sm font-medium">Active company</p>
+                <p class="text-muted-foreground text-xs">Available to users and planning flows</p>
+              </div>
+              <hlm-switch [checked]="model().active" (checkedChange)="updateActive($event)" />
+            </div>
+
+            @if (!canManage()) {
+              <p class="text-sm font-medium text-red-600" aria-live="polite">You do not have permission to manage this company.</p>
+            }
+            @if (formError(); as errorMessage) {
+              <p class="text-sm font-medium text-red-600" aria-live="polite">{{ errorMessage }}</p>
+            }
+            @if (formSuccess(); as successMessage) {
+              <p class="text-sm font-medium text-green-700" aria-live="polite">{{ successMessage }}</p>
+            }
+
+            <div class="flex justify-end">
+              <button hlmBtn type="submit" [disabled]="companyForm().submitting() || !canManage()">Save company</button>
+            </div>
+          </hlm-field-group>
+        </form>
+      </div>
+    </hlm-card>
+  }
+</section>

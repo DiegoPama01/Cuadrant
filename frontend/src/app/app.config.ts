@@ -4,6 +4,7 @@ import {
   withInterceptors,
 } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
+import { provideSpartanHlm } from '@spartan-ng/helm/utils';
 
 import { routes } from './app.routes';
 import { AuthService } from './core/auth/auth.service';
@@ -15,6 +16,7 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => inject(RuntimeConfigService).load()),
     provideAppInitializer(() => inject(AuthService).syncSession()),
     provideRouter(routes),
+    provideSpartanHlm(),
     provideHttpClient(
       withInterceptors([
         authInterceptor,

@@ -10,6 +10,7 @@ from django.conf import settings
 @dataclass(slots=True)
 class AuthentikUser:
     id: int
+    sub: str
 
 
 class AuthentikProvisioningError(Exception):
@@ -34,8 +35,9 @@ def create_user(*, name: str, email: str, password: str) -> AuthentikUser:
 
     created_user = _request_json("POST", "/api/v3/core/users/", payload)
     user_id = created_user.get("pk")
+    sub = created_user.get("uid")
 
-    if not isinstance(user_id, int):
+    if not isinstance(user_id, int) or not isinstance(sub, str) or not sub:
         raise AuthentikProvisioningError("Authentik did not return a valid user id.")
 
     try:
@@ -52,7 +54,7 @@ def create_user(*, name: str, email: str, password: str) -> AuthentikUser:
             status_code=exc.status_code,
         ) from exc
 
-    return AuthentikUser(id=user_id)
+    return AuthentikUser(id=user_id, sub=sub)
 
 
 def find_user_by_email(email: str) -> dict[str, Any] | None:
@@ -307,7 +309,7 @@ def _get_default_group_ids() -> list[str]:
 
 
 def _build_api_url(path: str) -> str:
-    issuer_url = settings.AUTHENTIK["ISSUER_URL"]
+    issuer_url = settings.AUTHENTIK["INTERNAL_URL"] or settings.AUTHENTIK["ISSUER_URL"]
     parsed_issuer = parse.urlparse(issuer_url)
     base_url = parse.urlunparse(
         (parsed_issuer.scheme, parsed_issuer.netloc, "", "", "", "")

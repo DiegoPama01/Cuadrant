@@ -23,6 +23,7 @@ frontend/public/app-config.json
 # IDE
 .idea/
 .vscode/
+.playwright-mcp/
 
 # OS
 .DS_Store

@@ -1,10 +1,10 @@
 import { Component, signal } from '@angular/core';
-import { NgxSonnerToaster } from 'ngx-sonner';
+import { HlmToasterImports } from '@spartan-ng/helm/sonner';
 import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, NgxSonnerToaster],
+  imports: [RouterOutlet, HlmToasterImports],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })

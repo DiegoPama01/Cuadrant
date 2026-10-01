@@ -12,11 +12,12 @@ import { HlmAlertDialogImports } from '@spartan-ng/helm/alert-dialog';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { HlmTableImports } from '@spartan-ng/helm/table';
+import { HlmTooltipImports } from '@spartan-ng/helm/tooltip';
 import { ZonesService } from './zones.service';
 
 @Component({
   selector: 'app-zones',
-  imports: [RouterLink, HlmAlertDialogImports, HlmButtonImports, HlmCardImports, HlmTableImports],
+  imports: [RouterLink, HlmAlertDialogImports, HlmButtonImports, HlmCardImports, HlmTableImports, HlmTooltipImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './zones.component.html',
 })

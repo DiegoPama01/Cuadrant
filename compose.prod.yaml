@@ -1,0 +1,28 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: cuadrant-backend-prod
+    expose:
+      - "8000"
+    networks:
+      - planning_net
+      - infra
+
+  frontend:
+    container_name: cuadrant-frontend-prod
+    depends_on:
+      - backend
+    expose:
+      - "8080"
+    networks:
+      - planning_net
+      - infra
+
+networks:
+  planning_net:
+    driver: bridge
+  infra:
+    external: true
+    name: infra

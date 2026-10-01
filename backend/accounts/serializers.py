@@ -33,10 +33,12 @@ class MeSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "email",
+            "authentik_sub",
             "first_name",
             "last_name",
             "companies",
         )
+        read_only_fields = ("authentik_sub",)
 
 
 class SignupSerializer(serializers.Serializer):

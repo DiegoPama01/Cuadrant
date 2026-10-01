@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from organizations.bootstrap import ensure_user_company_membership
+from authorization import fga
 
 from .authentik import (
     AuthentikProvisioningError,
@@ -75,14 +76,19 @@ class SignupView(APIView):
                     password=password,
                     first_name=_first_name(name),
                     last_name=_last_name(name),
+                    authentik_sub=created_authentik_user.sub,
                 )
             except IntegrityError as exc:
                 delete_user(created_authentik_user.id)
                 raise ValidationError(
                     {"email": ["An account with this email already exists."]}
                 ) from exc
+        elif local_user.authentik_sub != created_authentik_user.sub:
+            local_user.authentik_sub = created_authentik_user.sub
+            local_user.save(update_fields=["authentik_sub"])
 
         ensure_user_company_membership(local_user)
+        fga.provision_user(created_authentik_user.sub)
 
         return Response(
             {

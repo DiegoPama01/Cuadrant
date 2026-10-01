@@ -1,156 +1,225 @@
-<hlm-card>
-  <div hlmCardContent class="pt-6">
-    <form [formRoot]="employeeForm">
-      <hlm-field-group class="space-y-6">
-        <div class="grid gap-6 md:grid-cols-2">
-          <hlm-field>
-            <label hlmFieldLabel for="employee-first-name">First name</label>
-            <input hlmInput id="employee-first-name" type="text" placeholder="Alex" [formField]="employeeForm.first_name" />
-            @for (error of employeeForm.first_name().errors(); track error) {
-              <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
-            }
-          </hlm-field>
+<form [formRoot]="employeeForm" class="space-y-6">
+  <hlm-card>
+    <hlm-card-header>
+      <h2 hlmCardTitle>Información</h2>
+      <p hlmCardDescription>Datos básicos que se muestran en planificación.</p>
+    </hlm-card-header>
+    <div hlmCardContent class="space-y-4">
+      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+        <hlm-field class="md:col-span-2">
+          <label hlmFieldLabel for="employee-name">Nombre</label>
+          <input hlmInput id="employee-name" type="text" placeholder="Alex García" [formField]="employeeForm.full_name" />
+          @for (error of employeeForm.full_name().errors(); track error) {
+            <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
+          }
+        </hlm-field>
 
-          <hlm-field>
-            <label hlmFieldLabel for="employee-last-name">Last name</label>
-            <input hlmInput id="employee-last-name" type="text" placeholder="Johnson" [formField]="employeeForm.last_name" />
-            @for (error of employeeForm.last_name().errors(); track error) {
-              <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
-            }
-          </hlm-field>
+        <hlm-field class="md:col-span-2">
+          <label hlmFieldLabel for="employee-email">Email</label>
+          <input hlmInput id="employee-email" type="email" placeholder="alex@example.com" [formField]="employeeForm.email" />
+          @for (error of employeeForm.email().errors(); track error) {
+            <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
+          }
+        </hlm-field>
+
+        <hlm-field class="md:col-span-2">
+          <label hlmFieldLabel for="employee-phone">Teléfono</label>
+          <input hlmInput id="employee-phone" type="tel" placeholder="+34 600 000 000" [formField]="employeeForm.phone" />
+        </hlm-field>
+
+        <hlm-field class="md:col-span-2">
+          <label hlmFieldLabel for="employee-color">Color</label>
+          <div class="flex items-center gap-3">
+            <input hlmInput id="employee-color" type="color" class="h-9 w-16 shrink-0 p-1" [formField]="employeeForm.color" />
+            <code class="text-muted-foreground text-xs">{{ employeeForm.color().value() }}</code>
+          </div>
+        </hlm-field>
+      </div>
+
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div class="flex items-center justify-between gap-4 rounded-lg border p-3">
+          <div>
+            <p class="text-sm font-medium">Activo</p>
+            <p class="text-muted-foreground text-xs">Disponible para cuadrantes.</p>
+          </div>
+          <hlm-switch [checked]="model().active" (checkedChange)="updateActive($event)" />
         </div>
 
-        <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+        <div class="flex items-center justify-between gap-4 rounded-lg border p-3">
+          <div>
+            <label class="text-sm font-medium" for="quadrant-access">Dar acceso a Quadrant / cuadrant</label>
+            <p class="text-muted-foreground text-xs">Gestionar permisos del usuario asignado.</p>
+          </div>
+          <hlm-checkbox inputId="quadrant-access" [checked]="model().grant_quadrant_access" (checkedChange)="updateQuadrantAccess($event)" />
+        </div>
+      </div>
+    </div>
+  </hlm-card>
+
+  <div class="grid gap-6 xl:grid-cols-2">
+    <hlm-card>
+      <hlm-card-header>
+        <h2 hlmCardTitle>Puestos</h2>
+        <p hlmCardDescription>Selecciona uno o varios puestos e indica el principal.</p>
+      </hlm-card-header>
+      <div hlmCardContent class="space-y-4">
+        <app-selection-table
+          [items]="positionOptions()"
+          [selectedIds]="selectedPositionIds()"
+          title="Puestos asignados"
+          placeholder="Buscar puestos..."
+          removeLabel="Quitar"
+          (selected)="addPosition($event)"
+          (removed)="removePosition($event)"
+        />
+
+        @if (model().employee_positions.length > 0) {
           <hlm-field>
-            <label hlmFieldLabel for="employee-position-trigger">Position</label>
-            <hlm-select [value]="model().position || null" [itemToString]="positionToLabel" (valueChange)="updatePosition($event ?? '')">
-              <hlm-select-trigger id="employee-position-trigger" class="w-full">
-                <hlm-select-value placeholder="Select a position" />
+            <label hlmFieldLabel for="primary-position-trigger">Puesto principal</label>
+            <hlm-select [value]="model().position || null" [itemToString]="positionIdToLabel" (valueChange)="setPrimaryPosition($event ?? '')">
+              <hlm-select-trigger id="primary-position-trigger" class="w-full">
+                <hlm-select-value placeholder="Seleccionar puesto principal" />
               </hlm-select-trigger>
               <hlm-select-content *hlmSelectPortal>
                 <hlm-select-group>
-                  @for (position of positions(); track position.id) {
-                    <hlm-select-item [value]="position.id">{{ position.name }}</hlm-select-item>
+                  @for (employeePosition of model().employee_positions; track employeePosition.position) {
+                    <hlm-select-item [value]="employeePosition.position">{{ positionName(employeePosition.position) }}</hlm-select-item>
                   }
                 </hlm-select-group>
               </hlm-select-content>
             </hlm-select>
-            @for (error of employeeForm.position().errors(); track error) {
+          </hlm-field>
+        } @else {
+          <p class="text-muted-foreground text-sm">Añade al menos un puesto para crear el empleado.</p>
+        }
+      </div>
+    </hlm-card>
+
+    <hlm-card>
+      <hlm-card-header>
+        <h2 hlmCardTitle>Zonas</h2>
+        <p hlmCardDescription>Por defecto puede trabajar en todas las zonas.</p>
+      </hlm-card-header>
+      <div hlmCardContent class="space-y-4">
+        <hlm-radio-group class="flex flex-col gap-3 sm:flex-row sm:flex-wrap" [value]="model().zone_mode" (valueChange)="setZoneMode($event)">
+          <div class="flex items-center gap-3">
+            <hlm-radio value="all" inputId="zones-all"><hlm-radio-indicator indicator /></hlm-radio>
+            <label class="text-sm" for="zones-all">Todas las zonas</label>
+          </div>
+          <div class="flex items-center gap-3">
+            <hlm-radio value="custom" inputId="zones-custom"><hlm-radio-indicator indicator /></hlm-radio>
+            <label class="text-sm" for="zones-custom">Seleccionar zonas permitidas</label>
+          </div>
+        </hlm-radio-group>
+
+        @if (model().zone_mode === 'custom') {
+          <app-selection-table
+            [items]="zoneOptions()"
+            [selectedIds]="selectedZoneIds()"
+            title="Zonas permitidas"
+            placeholder="Buscar zonas..."
+            removeLabel="Quitar"
+            (selected)="addZone($event)"
+            (removed)="removeZone($event)"
+          />
+        }
+      </div>
+    </hlm-card>
+  </div>
+
+  <div class="grid gap-6 xl:grid-cols-2">
+    <hlm-card>
+      <hlm-card-header>
+        <h2 hlmCardTitle>Jornada / Contrato</h2>
+        <p hlmCardDescription>El alta crea el empleado y su contrato activo a la vez.</p>
+      </hlm-card-header>
+      <div hlmCardContent>
+        <div class="grid gap-4 md:grid-cols-3">
+          <hlm-field>
+            <label hlmFieldLabel for="weekly-hours">Horas semanales</label>
+            <input hlmInput id="weekly-hours" type="number" [formField]="employeeForm.contract.weekly_hours" />
+          </hlm-field>
+
+          <hlm-field>
+            <label hlmFieldLabel for="contract-start-date">Fecha inicio</label>
+            <hlm-date-picker [date]="startDateValue()" [formatDate]="formatDateForDisplay" autoCloseOnSelect (dateChange)="updateDateField('start_date', $event)">
+              <hlm-date-picker-input inputId="contract-start-date" placeholder="Seleccionar fecha" [parseDate]="parseDateInput" [formatInputDate]="formatDateForInput" />
+            </hlm-date-picker>
+            @for (error of employeeForm.contract.start_date().errors(); track error) {
               <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
             }
           </hlm-field>
 
-          <div class="flex items-center gap-3 rounded-lg px-4 py-3">
-            <div>
-              <p class="text-sm font-medium">Active employee</p>
-              <p class="text-muted-foreground text-xs">Included in planning</p>
-            </div>
-            <hlm-switch [checked]="model().active" (checkedChange)="updateActive($event)" />
+          <hlm-field>
+            <label hlmFieldLabel for="contract-end-date">Fecha fin (opcional)</label>
+            <hlm-date-picker [date]="endDateValue()" [formatDate]="formatDateForDisplay" autoCloseOnSelect (dateChange)="updateDateField('end_date', $event)">
+              <hlm-date-picker-input inputId="contract-end-date" placeholder="Sin fecha fin" [parseDate]="parseDateInput" [formatInputDate]="formatDateForInput" />
+            </hlm-date-picker>
+          </hlm-field>
+        </div>
+      </div>
+    </hlm-card>
+
+    <hlm-card>
+      <hlm-card-header>
+        <h2 hlmCardTitle>Disponibilidad</h2>
+        <p hlmCardDescription>Sin restricciones permite planificar cualquier día; con restricciones se envía EmployeeAvailability.</p>
+      </hlm-card-header>
+      <div hlmCardContent class="space-y-4">
+        <hlm-radio-group class="flex flex-col gap-3 sm:flex-row sm:flex-wrap" [value]="model().availability_mode" (valueChange)="updateAvailabilityMode($event)">
+          <div class="flex items-center gap-3">
+            <hlm-radio value="unrestricted" inputId="availability-unrestricted"><hlm-radio-indicator indicator /></hlm-radio>
+            <label class="text-sm" for="availability-unrestricted">Sin restricciones</label>
           </div>
-        </div>
+          <div class="flex items-center gap-3">
+            <hlm-radio value="custom" inputId="availability-custom"><hlm-radio-indicator indicator /></hlm-radio>
+            <label class="text-sm" for="availability-custom">Definir restricciones</label>
+          </div>
+        </hlm-radio-group>
 
-        <div class="grid gap-6 xl:grid-cols-2">
-          <hlm-field>
-            <div class="space-y-3">
-              <div>
-                <p class="text-sm font-medium">Allowed zones</p>
-                <p class="text-muted-foreground text-sm">Choose where this employee can be assigned.</p>
-              </div>
-              <div hlmTableContainer class="rounded-lg border bg-background">
-                <table hlmTable>
-                  <thead hlmTableHeader>
-                    <tr hlmTableRow>
-                      <th hlmTableHead class="w-16">
-                        <div class="flex justify-center">
-                          <hlm-checkbox
-                            [checked]="areAllZonesSelected()"
-                            (checkedChange)="toggleAllZones($event)"
-                            aria-label="Toggle all zones"
-                          />
-                        </div>
-                      </th>
-                      <th hlmTableHead>Zone</th>
-                    </tr>
-                  </thead>
-                  <tbody hlmTableBody>
-                    @for (zone of zones(); track zone.id) {
-                      <tr hlmTableRow>
-                        <td hlmTableCell>
-                          <div class="flex justify-center">
-                            <hlm-checkbox
-                              [checked]="model().allowed_zones.includes(zone.id)"
-                              (checkedChange)="toggleZone(zone.id, $event)"
-                              aria-label="Toggle {{ zone.name }} zone"
-                            />
-                          </div>
-                        </td>
-                        <td hlmTableCell class="font-medium">{{ zone.name }}</td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </hlm-field>
-
-          <hlm-field>
-            <div class="space-y-3">
-              <div>
-                <p class="text-sm font-medium">Allowed shifts</p>
-                <p class="text-muted-foreground text-sm">Choose which shifts this employee can work.</p>
-              </div>
-              <div hlmTableContainer class="rounded-lg border bg-background">
-                <table hlmTable>
-                  <thead hlmTableHeader>
-                    <tr hlmTableRow>
-                      <th hlmTableHead class="w-16">
-                        <div class="flex justify-center">
-                          <hlm-checkbox
-                            [checked]="areAllShiftsSelected()"
-                            (checkedChange)="toggleAllShifts($event)"
-                            aria-label="Toggle all shifts"
-                          />
-                        </div>
-                      </th>
-                      <th hlmTableHead>Shift</th>
-                    </tr>
-                  </thead>
-                  <tbody hlmTableBody>
-                    @for (shift of shifts(); track shift.id) {
-                      <tr hlmTableRow>
-                        <td hlmTableCell>
-                          <div class="flex justify-center">
-                            <hlm-checkbox
-                              [checked]="model().allowed_shifts.includes(shift.id)"
-                              (checkedChange)="toggleShift(shift.id, $event)"
-                              aria-label="Toggle {{ shift.name }} shift"
-                            />
-                          </div>
-                        </td>
-                        <td hlmTableCell>
-                          <div class="flex flex-col">
-                            <span class="font-medium">{{ shift.name }}</span>
-                            <span class="text-muted-foreground text-xs">{{ shift.start_time }} - {{ shift.end_time }}</span>
-                          </div>
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </hlm-field>
-        </div>
-
-        @if (formError(); as errorMessage) {
-          <p class="text-sm font-medium text-red-600" aria-live="polite">{{ errorMessage }}</p>
+        @if (model().availability_mode === 'custom') {
+          <div hlmTableContainer>
+            <table hlmTable>
+              <thead hlmTableHeader>
+                <tr hlmTableRow>
+                  <th hlmTableHead>Día</th>
+                  <th hlmTableHead>Disponible</th>
+                  <th hlmTableHead>Desde</th>
+                  <th hlmTableHead>Hasta</th>
+                </tr>
+              </thead>
+              <tbody hlmTableBody>
+                @for (day of days; track day.value) {
+                  @let row = model().availabilities[day.value];
+                  <tr hlmTableRow>
+                    <td hlmTableCell class="font-medium">{{ day.label }}</td>
+                    <td hlmTableCell>
+                      <hlm-checkbox [inputId]="'availability-' + day.value" [checked]="row.available" (checkedChange)="updateAvailabilityDay(day.value, { available: $event })" />
+                    </td>
+                    <td hlmTableCell>
+                      <label class="sr-only" [for]="'availability-start-' + day.value">Desde {{ day.label }}</label>
+                      <input hlmInput class="w-28" type="time" [id]="'availability-start-' + day.value" [value]="row.start_time" [disabled]="!row.available" (input)="updateAvailabilityDay(day.value, { start_time: $any($event.target).value })" />
+                    </td>
+                    <td hlmTableCell>
+                      <label class="sr-only" [for]="'availability-end-' + day.value">Hasta {{ day.label }}</label>
+                      <input hlmInput class="w-28" type="time" [id]="'availability-end-' + day.value" [value]="row.end_time" [disabled]="!row.available" (input)="updateAvailabilityDay(day.value, { end_time: $any($event.target).value })" />
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
         }
-
-        <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <button hlmBtn type="button" variant="outline" (click)="cancel()" [disabled]="employeeForm().submitting()">Cancel</button>
-          <button hlmBtn type="submit" [disabled]="employeeForm().submitting()">{{ submitLabel() }}</button>
-        </div>
-      </hlm-field-group>
-    </form>
+      </div>
+    </hlm-card>
   </div>
-</hlm-card>
+
+  @if (formError(); as errorMessage) {
+    <p class="text-sm font-medium text-red-600" aria-live="polite">{{ errorMessage }}</p>
+  }
+
+  <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+    <button hlmBtn type="button" variant="outline" (click)="cancel()">Cancelar</button>
+    <button hlmBtn type="submit" [disabled]="employeeForm().submitting()">{{ submitLabel() }}</button>
+  </div>
+</form>

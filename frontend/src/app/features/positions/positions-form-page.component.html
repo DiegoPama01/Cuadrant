@@ -19,7 +19,7 @@
       [submitLabel]="isEditMode ? 'Save changes' : 'Create position'"
       [formError]="formError()"
       [submitForm]="savePosition.bind(this)"
-      [cancel]="goBack.bind(this)"
+      cancelLink="/settings/positions"
     />
   }
 </section>

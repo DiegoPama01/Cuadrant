@@ -1,0 +1,61 @@
+<section class="space-y-2" [attr.aria-label]="title()">
+  <div class="flex items-center gap-2">
+    <hlm-combobox-multiple class="min-w-0 flex-1" [itemToString]="itemToString" [value]="selectedItems()" (valueChange)="selectItems($event)">
+      <hlm-combobox-chips>
+        @for (item of selectedItems(); track item.id) {
+          <hlm-combobox-chip [value]="item">{{ item.label }}</hlm-combobox-chip>
+        }
+        <input hlmComboboxChipInput [placeholder]="placeholder()" />
+      </hlm-combobox-chips>
+      <hlm-combobox-content *hlmComboboxPortal>
+        <hlm-combobox-empty>No items found.</hlm-combobox-empty>
+        <div hlmComboboxList>
+          @for (item of availableItems(); track item.id) {
+            <hlm-combobox-item [value]="item">{{ item.label }}</hlm-combobox-item>
+          }
+        </div>
+      </hlm-combobox-content>
+    </hlm-combobox-multiple>
+    <ng-content select="[selection-table-create]" />
+  </div>
+
+  <div hlmTableContainer>
+    <table hlmTable>
+      <thead hlmTableHeader>
+        <tr hlmTableRow>
+          <th hlmTableHead>{{ title() }}</th>
+          @if (showQuantity()) { <th hlmTableHead class="w-28">{{ quantityLabel() }}</th> }
+          <th hlmTableHead class="w-24 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody hlmTableBody>
+        @for (item of selectedItems(); track item.id) {
+          <tr hlmTableRow (click)="activateItem(item)">
+            <td hlmTableCell>
+              <button type="button" class="text-left">
+                <span class="font-medium">{{ item.label }}</span>
+                @if (item.detail) { <span class="text-muted-foreground ms-2">{{ item.detail }}</span> }
+              </button>
+            </td>
+            @if (showQuantity()) {
+              <td hlmTableCell>
+                <label class="sr-only" [attr.for]="'selection-quantity-' + item.id">{{ quantityLabel() }}</label>
+                <input hlmInput class="w-20" type="number" min="1" [id]="'selection-quantity-' + item.id" [value]="quantityFor(item)" (input)="updateQuantity($event, item)" />
+              </td>
+            }
+            <td hlmTableCell class="text-right">
+              <button hlmBtn type="button" variant="ghost" size="icon-sm" (click)="removeItem($event, item)" [attr.aria-label]="removeLabel() + ' ' + item.label">
+                <ng-icon name="lucideTrash2" aria-hidden="true" />
+                <span class="sr-only">{{ removeLabel() }} {{ item.label }}</span>
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr hlmTableRow>
+            <td hlmTableCell [attr.colSpan]="showQuantity() ? 3 : 2" class="text-muted-foreground">No items selected.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

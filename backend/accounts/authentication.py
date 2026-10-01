@@ -1,5 +1,3 @@
-import base64
-import json
 from typing import Any
 
 from django.conf import settings
@@ -8,6 +6,7 @@ from rest_framework import authentication
 from rest_framework.exceptions import AuthenticationFailed
 
 from organizations.bootstrap import ensure_user_company_membership
+from authorization import fga
 
 from .authentik import AuthentikProvisioningError, get_userinfo
 from .models import User
@@ -32,9 +31,6 @@ class AuthentikUserInfoAuthentication(authentication.BaseAuthentication):
         if not token:
             return None
 
-        if not _looks_like_authentik_token(token):
-            return None
-
         try:
             claims = get_userinfo(token)
         except AuthentikProvisioningError as exc:
@@ -50,7 +46,8 @@ class AuthentikUserInfoAuthentication(authentication.BaseAuthentication):
 
 def _sync_user_from_claims(claims: dict[str, Any]) -> User | AnonymousUser:
     email = claims.get("email")
-    if not isinstance(email, str) or not email:
+    sub = claims.get(settings.AUTHENTIK["SUB_CLAIM"])
+    if not isinstance(email, str) or not email or not isinstance(sub, str) or not sub:
         return AnonymousUser()
 
     raw_name = claims.get("name")
@@ -62,6 +59,7 @@ def _sync_user_from_claims(claims: dict[str, Any]) -> User | AnonymousUser:
         defaults={
             "first_name": first_name,
             "last_name": last_name,
+            "authentik_sub": sub,
         },
     )
 
@@ -72,9 +70,13 @@ def _sync_user_from_claims(claims: dict[str, Any]) -> User | AnonymousUser:
     if not created and last_name and user.last_name != last_name:
         user.last_name = last_name
         updated_fields.append("last_name")
+    if not created and user.authentik_sub != sub:
+        user.authentik_sub = sub
+        updated_fields.append("authentik_sub")
     if updated_fields:
         user.save(update_fields=updated_fields)
     ensure_user_company_membership(user)
+    fga.provision_user(sub)
     return user
 
 
@@ -83,35 +85,3 @@ def _split_name(name: str) -> tuple[str, str]:
     return first_name, last_name.strip()
 
 
-def _looks_like_authentik_token(token: str) -> bool:
-    payload = _decode_jwt_payload(token)
-    issuer = payload.get("iss") if isinstance(payload.get("iss"), str) else ""
-    configured_issuer = settings.AUTHENTIK["ISSUER_URL"]
-
-    # Authentik can return opaque access tokens. Let its userinfo endpoint
-    # validate those instead of rejecting them before the request is made.
-    if not payload:
-        return True
-
-    return bool(
-        issuer
-        and configured_issuer
-        and issuer.rstrip("/") == configured_issuer.rstrip("/")
-    )
-
-
-def _decode_jwt_payload(token: str) -> dict[str, Any]:
-    parts = token.split(".")
-    if len(parts) != 3:
-        return {}
-
-    payload = parts[1]
-    payload += "=" * (-len(payload) % 4)
-
-    try:
-        decoded = base64.urlsafe_b64decode(payload.encode("utf-8")).decode("utf-8")
-        parsed = json.loads(decoded)
-    except (ValueError, json.JSONDecodeError):
-        return {}
-
-    return parsed if isinstance(parsed, dict) else {}
