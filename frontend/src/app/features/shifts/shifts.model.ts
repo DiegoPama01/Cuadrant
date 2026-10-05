@@ -7,7 +7,6 @@ export interface Shift {
   end_time: string;
   break_minutes?: number;
   color: string;
-  sort_order?: number;
   active?: boolean;
   created_at?: string;
   updated_at?: string;
@@ -21,6 +20,5 @@ export interface ShiftUpsertPayload {
   end_time: string;
   break_minutes: number;
   color: string;
-  sort_order: number;
   active: boolean;
 }

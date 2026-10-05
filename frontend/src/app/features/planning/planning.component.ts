@@ -112,8 +112,9 @@ export class PlanningComponent {
   protected readonly selectedDate = signal(this.formatDate(new Date()));
   protected readonly assignments = signal<Record<string, Assignment>>({});
   protected readonly employeeSearch = signal('');
-  protected readonly zoneFilter = signal('all');
-  protected readonly positionFilter = signal('all');
+  protected readonly zoneFilter = signal<string[]>([]);
+  protected readonly shiftFilter = signal<string[]>([]);
+  protected readonly positionFilter = signal<string[]>([]);
   protected readonly isSaving = signal(false);
   protected readonly hasPendingChanges = signal(false);
   protected readonly saveError = signal<string | null>(null);
@@ -173,7 +174,6 @@ export class PlanningComponent {
           zone: requirement.zone,
           shift: requirement.shift,
           active: true,
-          sort_order: 0,
         });
     }
     return [...pairs.values()];
@@ -183,7 +183,7 @@ export class PlanningComponent {
     if (!data) return [];
     return buildPlanningRows(data.positions, data.zones, this.presets(), this.staffRequirements(), {
       zone: this.zoneFilter(),
-      shift: 'all',
+      shift: this.shiftFilter(),
       position: this.positionFilter(),
     });
   });
@@ -248,6 +248,22 @@ export class PlanningComponent {
   }
   protected updateDate(date: Date | null | undefined): void {
     if (date) this.selectedDate.set(this.formatDate(date));
+  }
+  protected toggleFilter(filter: 'zone' | 'shift' | 'position', value: string): void {
+    const state = filter === 'zone' ? this.zoneFilter : filter === 'shift' ? this.shiftFilter : this.positionFilter;
+    state.update((selected) => selected.includes(value)
+      ? selected.filter((item) => item !== value)
+      : [...selected, value]);
+  }
+  protected clearFilters(): void {
+    this.zoneFilter.set([]);
+    this.shiftFilter.set([]);
+    this.positionFilter.set([]);
+  }
+  protected clearFilter(filter: 'zone' | 'shift' | 'position'): void {
+    if (filter === 'zone') this.zoneFilter.set([]);
+    if (filter === 'shift') this.shiftFilter.set([]);
+    if (filter === 'position') this.positionFilter.set([]);
   }
   protected moveWeek(days: number): void {
     const date = new Date(this.weekStart());

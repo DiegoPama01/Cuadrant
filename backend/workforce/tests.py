@@ -269,6 +269,34 @@ class WorkforceInfrastructureTests(APITestCase):
         self.assertTrue(EmployeeAvailability.objects.filter(employee=employee, day_of_week=0).exists())
         self.assertTrue(employee.allowed_zones.filter(id=self.zone.id).exists())
 
+    def test_employee_contract_start_date_is_optional(self):
+        response = self.client.post(
+            reverse("employee-list", kwargs={"company_id": self.company.id}),
+            {
+                "installation": str(self.installation.id),
+                "first_name": "Alex",
+                "hire_date": "",
+                "termination_date": "",
+                "employee_positions": [{"position": str(self.position.id), "primary": True}],
+                "contract": {"weekly_hours": "40.00", "active": True},
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        contract = Contract.objects.get(employee__first_name="Alex")
+        self.assertIsNone(contract.start_date)
+
+    def test_employee_requires_a_position(self):
+        response = self.client.post(
+            reverse("employee-list", kwargs={"company_id": self.company.id}),
+            {"installation": str(self.installation.id), "first_name": "Alex"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("position", response.data)
+
     def test_employee_composite_rejects_multiple_primary_positions(self):
         second_position = Position.objects.create(installation=self.installation, name="Waiter")
         response = self.client.post(

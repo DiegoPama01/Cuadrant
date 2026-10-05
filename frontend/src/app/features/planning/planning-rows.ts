@@ -20,9 +20,9 @@ export interface PlanningRowPositionRequirement {
 }
 
 export interface PlanningRowFilters {
-  zone: string;
-  shift: string;
-  position: string;
+  zone: string[];
+  shift: string[];
+  position: string[];
 }
 
 export function buildPlanningRows(
@@ -44,7 +44,7 @@ export function buildPlanningRows(
     const rowId = `${requirement.zone}:${requirement.shift}`;
     const current = rowsByPreset.get(rowId) ?? {
       id: rowId,
-      preset: { id: rowId, zone: requirement.zone, shift: requirement.shift, active: true, sort_order: 0 },
+      preset: { id: rowId, zone: requirement.zone, shift: requirement.shift, active: true },
       requirements: [],
       minimum: 0,
       maximum: 0,
@@ -73,8 +73,8 @@ export function buildPlanningRows(
     }))
     .filter(
       (row) =>
-        (filters.zone === 'all' || row.preset.zone === filters.zone) &&
-        (filters.shift === 'all' || row.preset.shift === filters.shift) &&
-        (filters.position === 'all' || row.requirements.some((requirement) => requirement.position.id === filters.position)),
+        (filters.zone.length === 0 || filters.zone.includes(row.preset.zone)) &&
+        (filters.shift.length === 0 || filters.shift.includes(row.preset.shift)) &&
+        (filters.position.length === 0 || row.requirements.some((requirement) => filters.position.includes(requirement.position.id))),
     );
 }

@@ -174,7 +174,6 @@ export interface PlanningZoneShift {
   zone: string;
   shift: string;
   active: boolean;
-  sort_order: number;
 }
 
 export interface PlanningWeekWriteAssignment {

@@ -42,15 +42,14 @@ export class ZonesFormComponent {
     code: '',
     description: '',
     color: randomFormColor(),
-    sort_order: 0,
     active: true,
     staff_requirements: [],
   });
   protected readonly localShifts = signal<Shift[]>([]);
   protected readonly localPositions = signal<Position[]>([]);
   protected readonly activeShiftId = signal<string | null>(null);
-  protected readonly newShift = signal<ShiftUpsertPayload>({ name: '', code: '', start_time: '', end_time: '', break_minutes: 0, color: randomFormColor(), sort_order: 0, active: true });
-  protected readonly newPosition = signal<PositionUpsertPayload>({ name: '', code: '', description: '', color: randomFormColor(), sort_order: 0, active: true });
+  protected readonly newShift = signal<ShiftUpsertPayload>({ name: '', code: '', start_time: '', end_time: '', break_minutes: 0, color: randomFormColor(), active: true });
+  protected readonly newPosition = signal<PositionUpsertPayload>({ name: '', code: '', description: '', color: randomFormColor(), active: true });
   protected readonly createError = signal<string | null>(null);
   protected readonly shiftOptions = computed<SelectionTableItem[]>(() => this.localShifts().map((shift) => ({
     id: shift.id,
@@ -173,7 +172,7 @@ export class ZonesFormComponent {
       this.localShifts.update((items) => [...items, shift]);
       this.toggleShift(shift.id, true);
       this.activeShiftId.set(shift.id);
-      this.newShift.set({ name: '', code: '', start_time: '', end_time: '', break_minutes: 0, color: randomFormColor(), sort_order: 0, active: true });
+      this.newShift.set({ name: '', code: '', start_time: '', end_time: '', break_minutes: 0, color: randomFormColor(), active: true });
     } catch {
       this.createError.set('We could not create this shift.');
     }
@@ -185,7 +184,7 @@ export class ZonesFormComponent {
       const position = await this.createPosition()({ ...this.newPosition(), installation: this.model().installation });
       this.localPositions.update((items) => [...items, position]);
       this.addPosition(position.id);
-      this.newPosition.set({ name: '', code: '', description: '', color: randomFormColor(), sort_order: 0, active: true });
+      this.newPosition.set({ name: '', code: '', description: '', color: randomFormColor(), active: true });
     } catch {
       this.createError.set('We could not create this position.');
     }

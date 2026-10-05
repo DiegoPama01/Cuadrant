@@ -45,7 +45,6 @@ export class ShiftsFormPageComponent {
         end_time: '',
         break_minutes: 0,
         color: randomFormColor(),
-        sort_order: 0,
         active: true,
       };
     }
@@ -58,7 +57,6 @@ export class ShiftsFormPageComponent {
       end_time: shift.end_time,
       break_minutes: shift.break_minutes ?? 0,
       color: shift.color,
-      sort_order: shift.sort_order ?? 0,
       active: shift.active ?? true,
     };
   });

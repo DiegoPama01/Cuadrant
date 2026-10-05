@@ -34,8 +34,8 @@ export type EmployeeAvailabilityMode = 'unrestricted' | 'custom';
 export interface EmployeeContractFormPayload {
   id?: string;
   weekly_hours: number | null;
-  start_date: string;
-  end_date: string;
+  start_date: string | null;
+  end_date: string | null;
   active: boolean;
 }
 
@@ -67,8 +67,8 @@ export interface EmployeeUpsertPayload {
   last_name: string;
   email: string;
   phone: string;
-  hire_date: string;
-  termination_date: string;
+  hire_date: string | null;
+  termination_date: string | null;
   color: string;
   notes: string;
   active: boolean;

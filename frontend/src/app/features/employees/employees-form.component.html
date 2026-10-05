@@ -92,6 +92,9 @@
         } @else {
           <p class="text-muted-foreground text-sm">Añade al menos un puesto para crear el empleado.</p>
         }
+        @if (positionError(); as error) {
+          <p class="text-sm font-medium text-red-600" role="alert">{{ error }}</p>
+        }
       </div>
     </hlm-card>
 
@@ -141,13 +144,10 @@
           </hlm-field>
 
           <hlm-field>
-            <label hlmFieldLabel for="contract-start-date">Fecha inicio</label>
+            <label hlmFieldLabel for="contract-start-date">Fecha inicio (opcional)</label>
             <hlm-date-picker [date]="startDateValue()" [formatDate]="formatDateForDisplay" autoCloseOnSelect (dateChange)="updateDateField('start_date', $event)">
               <hlm-date-picker-input inputId="contract-start-date" placeholder="Seleccionar fecha" [parseDate]="parseDateInput" [formatInputDate]="formatDateForInput" />
             </hlm-date-picker>
-            @for (error of employeeForm.contract.start_date().errors(); track error) {
-              <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
-            }
           </hlm-field>
 
           <hlm-field>

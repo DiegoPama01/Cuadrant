@@ -61,6 +61,7 @@ export class EmployeesFormComponent {
 
   protected readonly days = WEEK_DAYS;
   protected readonly model = signal<EmployeeUpsertPayload>(this.createEmptyModel());
+  protected readonly positionError = signal<string | null>(null);
   protected readonly startDateValue = computed(() => this.parseDateValue(this.model().contract.start_date));
   protected readonly endDateValue = computed(() => this.parseDateValue(this.model().contract.end_date));
   protected readonly formatDateForDisplay = (date: Date): string => this.formatDateValue(date);
@@ -93,7 +94,22 @@ export class EmployeesFormComponent {
     {
       submission: {
         action: async () => {
-          await this.submitForm()({ ...this.model() });
+          const value = this.model();
+          if (value.employee_positions.length === 0 || !value.position) {
+            this.positionError.set('Selecciona al menos un puesto.');
+            return;
+          }
+          this.positionError.set(null);
+          await this.submitForm()({
+            ...value,
+            hire_date: value.hire_date || null,
+            termination_date: value.termination_date || null,
+            contract: {
+              ...value.contract,
+              start_date: value.contract.start_date || null,
+              end_date: value.contract.end_date || null,
+            },
+          });
         },
       },
     },
@@ -119,6 +135,7 @@ export class EmployeesFormComponent {
   }
 
   protected addPosition(item: SelectionTableItem): void {
+    this.positionError.set(null);
     this.model.update((value) => {
       if (value.employee_positions.some((position) => position.position === item.id)) {
         return value;
@@ -141,6 +158,7 @@ export class EmployeesFormComponent {
         ? remaining
         : remaining.map((position, index) => ({ ...position, primary: index === 0 }));
       const primary = normalized.find((position) => position.primary)?.position ?? normalized[0]?.position ?? '';
+      this.positionError.set(normalized.length === 0 ? 'Selecciona al menos un puesto.' : null);
 
       return { ...value, position: primary, employee_positions: normalized };
     });
@@ -210,7 +228,12 @@ export class EmployeesFormComponent {
       full_name: next.full_name || `${next.first_name} ${next.last_name}`.trim(),
       position: primary,
       employee_positions: employeePositions.map((position) => ({ ...position, primary: position.position === primary })),
-      contract: { ...this.createEmptyModel().contract, ...next.contract },
+      contract: {
+        ...this.createEmptyModel().contract,
+        ...next.contract,
+        start_date: next.contract.start_date ?? '',
+        end_date: next.contract.end_date ?? '',
+      },
       availabilities: this.mergeAvailabilityRows(next.availabilities),
     };
   }

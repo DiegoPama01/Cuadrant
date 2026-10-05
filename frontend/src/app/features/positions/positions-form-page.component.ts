@@ -44,7 +44,6 @@ export class PositionsFormPageComponent {
         code: '',
         description: '',
         color: randomFormColor(),
-        sort_order: 0,
         active: true,
       };
     }
@@ -55,7 +54,6 @@ export class PositionsFormPageComponent {
       code: position.code ?? '',
       description: position.description ?? '',
       color: position.color,
-      sort_order: position.sort_order ?? 0,
       active: position.active ?? true,
     };
   });

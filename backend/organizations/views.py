@@ -161,7 +161,7 @@ class ZoneViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Zone.objects.filter(
             installation__company=self.get_company(),
-        ).select_related("installation", "installation__company").order_by("sort_order", "name")
+        ).select_related("installation", "installation__company").order_by("name")
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -194,7 +194,7 @@ class ShiftViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Shift.objects.filter(
             installation__company=self.get_company(),
-        ).select_related("installation", "installation__company").order_by("sort_order", "start_time", "name")
+        ).select_related("installation", "installation__company").order_by("name")
 
     def get_serializer_context(self):
         context = super().get_serializer_context()

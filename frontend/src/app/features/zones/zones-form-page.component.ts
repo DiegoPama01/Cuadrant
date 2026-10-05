@@ -54,7 +54,6 @@ export class ZonesFormPageComponent {
         code: '',
         description: '',
         color: randomFormColor(),
-        sort_order: 0,
         active: true,
         staff_requirements: [],
       };
@@ -66,7 +65,6 @@ export class ZonesFormPageComponent {
       code: zone.code ?? '',
       description: zone.description ?? '',
       color: zone.color,
-      sort_order: zone.sort_order ?? 0,
       active: zone.active ?? true,
       staff_requirements: zone.staff_requirements ?? [],
     };

@@ -42,6 +42,13 @@ def _has_partial_time_pair(serializer, attrs, start_field="start_time", end_fiel
     return (start is None) != (end is None)
 
 
+class OptionalDateField(serializers.DateField):
+    def to_internal_value(self, value):
+        if value == "":
+            return None
+        return super().to_internal_value(value)
+
+
 class PositionSerializer(serializers.ModelSerializer):
     installation = serializers.PrimaryKeyRelatedField(queryset=Installation.objects.none(), required=False)
 
@@ -54,7 +61,6 @@ class PositionSerializer(serializers.ModelSerializer):
             "code",
             "description",
             "color",
-            "sort_order",
             "active",
             "created_at",
             "updated_at",
@@ -70,7 +76,7 @@ class PositionSerializer(serializers.ModelSerializer):
 
 class EmployeeContractPayloadSerializer(serializers.Serializer):
     id = serializers.UUIDField(read_only=True)
-    start_date = serializers.DateField()
+    start_date = serializers.DateField(required=False, allow_null=True)
     end_date = serializers.DateField(required=False, allow_null=True)
     weekly_hours = serializers.DecimalField(max_digits=5, decimal_places=2)
     work_percentage = serializers.IntegerField(required=False, allow_null=True, min_value=0, max_value=100)
@@ -122,6 +128,8 @@ class EmployeeAvailabilityPayloadSerializer(serializers.Serializer):
 
 class EmployeeSerializer(serializers.ModelSerializer):
     installation = serializers.PrimaryKeyRelatedField(queryset=Installation.objects.none(), required=False)
+    hire_date = OptionalDateField(required=False, allow_null=True)
+    termination_date = OptionalDateField(required=False, allow_null=True)
     position = serializers.PrimaryKeyRelatedField(
         queryset=Position.objects.none(),
         required=False,
@@ -223,6 +231,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
         nested_positions = attrs.get("employee_positions")
         if nested_positions is not None:
+            if not nested_positions:
+                raise serializers.ValidationError({"employee_positions": "At least one position is required."})
             if len([item for item in nested_positions if item.get("primary")]) > 1:
                 raise serializers.ValidationError({"employee_positions": "Only one primary position is allowed."})
             position_ids = [item["position"].id for item in nested_positions]
@@ -231,6 +241,17 @@ class EmployeeSerializer(serializers.ModelSerializer):
             for item in nested_positions:
                 if installation and item["position"].installation_id != installation.id:
                     raise serializers.ValidationError({"employee_positions": "Positions must belong to the employee installation."})
+
+        position = attrs.get("position")
+        if nested_positions:
+            position = next((item["position"] for item in nested_positions if item.get("primary")), nested_positions[0]["position"])
+        elif self.instance is not None and "position" not in attrs:
+            position = self.instance.position or next(
+                iter(self.instance.employee_positions.values_list("position_id", flat=True)),
+                None,
+            )
+        if position is None:
+            raise serializers.ValidationError({"position": "At least one position is required."})
 
         nested_zones = attrs.get("employee_zones")
         all_zones = attrs.get("all_zones", getattr(self.instance, "all_zones", True))
@@ -254,7 +275,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({"availabilities": "Only one habitual availability entry per day is supported by this endpoint."})
 
         contract = attrs.get("contract")
-        if contract:
+        if contract and contract.get("start_date") and contract.get("end_date"):
             end_date = contract.get("end_date")
             if end_date and end_date < contract["start_date"]:
                 raise serializers.ValidationError({"contract": {"end_date": "End date must be on or after start date."}})
@@ -264,6 +285,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
     def _sync_contract(self, employee, contract_data):
         if contract_data is None:
             return
+        if not contract_data.get("start_date"):
+            contract_data["start_date"] = None
         active_contract = employee.contracts.filter(active=True).order_by("-start_date").first()
         if active_contract:
             for key, value in contract_data.items():
@@ -281,7 +304,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
         EmployeePosition.objects.bulk_create(
             [EmployeePosition(employee=employee, **item) for item in positions_data]
         )
-        primary = next((item["position"] for item in positions_data if item.get("primary")), None)
+        primary = next((item["position"] for item in positions_data if item.get("primary")), positions_data[0]["position"] if positions_data else None)
         if primary and employee.position_id != primary.id:
             employee.position = primary
             employee.save(update_fields=["position"])
@@ -388,6 +411,7 @@ class CompanyScopedModelSerializer(serializers.ModelSerializer):
 
 class ContractSerializer(CompanyScopedModelSerializer):
     employee = serializers.PrimaryKeyRelatedField(queryset=Employee.objects.none())
+    start_date = serializers.DateField(required=False, allow_null=True)
 
     class Meta:
         model = Contract

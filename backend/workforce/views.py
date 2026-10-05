@@ -267,7 +267,7 @@ class PositionViewSet(viewsets.ModelViewSet):
 
         return Position.objects.filter(
             installation__company=company,
-        ).select_related("installation", "installation__company").order_by("sort_order", "name")
+        ).select_related("installation", "installation__company").order_by("name")
 
     def get_serializer_context(self):
         context = super().get_serializer_context()

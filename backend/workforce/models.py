@@ -31,7 +31,7 @@ class Position(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["sort_order", "name"]
+        ordering = ["name"]
         constraints = [
             models.UniqueConstraint(
                 fields=["installation", "name"],
@@ -79,7 +79,7 @@ class Zone(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     class Meta:
-        ordering = ["sort_order", "name"]
+        ordering = ["name"]
         constraints = [
             models.UniqueConstraint(
                 fields=["installation", "name"],
@@ -126,7 +126,7 @@ class Shift(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["sort_order", "start_time", "name"]
+        ordering = ["name"]
         constraints = [
             models.UniqueConstraint(
                 fields=["installation", "name"],
@@ -149,7 +149,7 @@ class Shift(models.Model):
 class Contract(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     employee = models.ForeignKey("Employee", on_delete=models.CASCADE, related_name="contracts")
-    start_date = models.DateField()
+    start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
     weekly_hours = models.DecimalField(max_digits=5, decimal_places=2)
     work_percentage = models.PositiveSmallIntegerField(blank=True, null=True)
@@ -161,7 +161,7 @@ class Contract(models.Model):
     class Meta:
         ordering = ["employee__first_name", "employee__last_name", "-start_date"]
         constraints = [
-            models.CheckConstraint(condition=models.Q(end_date__isnull=True) | models.Q(end_date__gte=models.F("start_date")), name="contract_end_date_after_start_date"),
+            models.CheckConstraint(condition=models.Q(end_date__isnull=True) | models.Q(start_date__isnull=True) | models.Q(end_date__gte=models.F("start_date")), name="contract_end_date_after_start_date"),
             models.CheckConstraint(condition=models.Q(weekly_hours__gte=0), name="contract_weekly_hours_non_negative"),
             models.CheckConstraint(condition=models.Q(work_percentage__isnull=True) | models.Q(work_percentage__lte=100), name="contract_work_percentage_max_100"),
         ]

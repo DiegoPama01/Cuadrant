@@ -20,13 +20,13 @@ from .models import (
 
 @admin.register(Position)
 class PositionAdmin(admin.ModelAdmin):
-    list_display = ("name", "installation", "code", "sort_order", "active")
+    list_display = ("name", "installation", "code", "active")
     list_filter = ("installation__company", "installation", "active")
 
 
 @admin.register(Zone)
 class ZoneAdmin(admin.ModelAdmin):
-    list_display = ("name", "installation", "code", "sort_order", "active")
+    list_display = ("name", "installation", "code", "active")
     list_filter = ("installation__company", "installation", "active")
 
 

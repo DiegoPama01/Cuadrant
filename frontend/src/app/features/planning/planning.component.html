@@ -57,58 +57,47 @@
       <button hlmDropdownMenuItem type="button" [hlmDropdownMenuSubTrigger]="zoneFilters">
         Zone<hlm-dropdown-menu-item-sub-indicator />
       </button>
+      <button hlmDropdownMenuItem type="button" [hlmDropdownMenuSubTrigger]="shiftFilters">
+        Shift<hlm-dropdown-menu-item-sub-indicator />
+      </button>
       <button hlmDropdownMenuItem type="button" [hlmDropdownMenuSubTrigger]="positionFilters">
         Position<hlm-dropdown-menu-item-sub-indicator />
       </button>
       <hlm-dropdown-menu-separator />
-      <button
-        hlmDropdownMenuItem
-        type="button"
-        (click)="zoneFilter.set('all'); positionFilter.set('all')"
-      >
-        Clear filters
-      </button>
+      <button hlmDropdownMenuItem type="button" (click)="clearFilters()">Clear filters</button>
     </hlm-dropdown-menu>
     <ng-template #zoneFilters>
       <hlm-dropdown-menu-sub>
-        <button
-          hlmDropdownMenuItem
-          type="button"
-          [attr.aria-pressed]="zoneFilter() === 'all'"
-          (click)="zoneFilter.set('all')"
-        >
-          All zones
+        <button hlmDropdownMenuCheckbox [checked]="zoneFilter().length === 0" (triggered)="clearFilter('zone')">
+          All zones<hlm-dropdown-menu-checkbox-indicator />
         </button>
         @for (zone of data()?.zones ?? []; track zone.id) {
-          <button
-            hlmDropdownMenuItem
-            type="button"
-            [attr.aria-pressed]="zoneFilter() === zone.id"
-            (click)="zoneFilter.set(zone.id)"
-          >
-            {{ zone.name }}
+          <button hlmDropdownMenuCheckbox [checked]="zoneFilter().includes(zone.id)" (triggered)="toggleFilter('zone', zone.id)">
+            {{ zone.name }}<hlm-dropdown-menu-checkbox-indicator />
+          </button>
+        }
+      </hlm-dropdown-menu-sub>
+    </ng-template>
+    <ng-template #shiftFilters>
+      <hlm-dropdown-menu-sub>
+        <button hlmDropdownMenuCheckbox [checked]="shiftFilter().length === 0" (triggered)="clearFilter('shift')">
+          All shifts<hlm-dropdown-menu-checkbox-indicator />
+        </button>
+        @for (shift of data()?.shifts ?? []; track shift.id) {
+          <button hlmDropdownMenuCheckbox [checked]="shiftFilter().includes(shift.id)" (triggered)="toggleFilter('shift', shift.id)">
+            {{ shift.name }}<hlm-dropdown-menu-checkbox-indicator />
           </button>
         }
       </hlm-dropdown-menu-sub>
     </ng-template>
     <ng-template #positionFilters>
       <hlm-dropdown-menu-sub>
-        <button
-          hlmDropdownMenuItem
-          type="button"
-          [attr.aria-pressed]="positionFilter() === 'all'"
-          (click)="positionFilter.set('all')"
-        >
-          All positions
+        <button hlmDropdownMenuCheckbox [checked]="positionFilter().length === 0" (triggered)="clearFilter('position')">
+          All positions<hlm-dropdown-menu-checkbox-indicator />
         </button>
         @for (position of data()?.positions ?? []; track position.id) {
-          <button
-            hlmDropdownMenuItem
-            type="button"
-            [attr.aria-pressed]="positionFilter() === position.id"
-            (click)="positionFilter.set(position.id)"
-          >
-            {{ position.name }}
+          <button hlmDropdownMenuCheckbox [checked]="positionFilter().includes(position.id)" (triggered)="toggleFilter('position', position.id)">
+            {{ position.name }}<hlm-dropdown-menu-checkbox-indicator />
           </button>
         }
       </hlm-dropdown-menu-sub>

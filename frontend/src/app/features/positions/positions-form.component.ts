@@ -33,7 +33,6 @@ export class PositionsFormComponent {
     code: '',
     description: '',
     color: randomFormColor(),
-    sort_order: 0,
     active: true,
   });
 
