@@ -1,0 +1,81 @@
+<hlm-dialog-header>
+  <h2 hlmDialogTitle>{{ context.date }}</h2>
+  <p hlmDialogDescription>{{ selectedEmployee()?.first_name }} {{ selectedEmployee()?.last_name }}</p>
+</hlm-dialog-header>
+
+<form class="grid gap-4" [formGroup]="form" (ngSubmit)="save()">
+  <hlm-field>
+    <label hlmFieldLabel for="entry-employee">Assigned to</label>
+    <select id="entry-employee" hlmInput formControlName="employee">
+      @for (employee of employees; track employee.id) {
+        <option [value]="employee.id">{{ employee.first_name }} {{ employee.last_name }}</option>
+      }
+    </select>
+  </hlm-field>
+
+  <div class="grid gap-4">
+    <hlm-field>
+      <label hlmFieldLabel for="entry-role">Job role</label>
+      <select id="entry-role" hlmInput formControlName="jobRole">
+        <option value="" disabled>Select a role</option>
+        @for (role of allowedJobRoles(); track role.id) {
+          <option [value]="role.id">{{ role.name }}</option>
+        }
+      </select>
+      @if (allowedJobRoles().length === 0) {
+        <p class="text-destructive text-xs">This employee has no job roles configured.</p>
+      }
+    </hlm-field>
+  </div>
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    <hlm-field>
+      <label hlmFieldLabel for="entry-start">Start time</label>
+      <div class="relative">
+        <input id="entry-start" hlmInput type="time" formControlName="startsAt" aria-haspopup="listbox" [attr.aria-expanded]="timeSuggestionTarget() === 'startsAt'" (focus)="showTimeSuggestions('startsAt')" (click)="showTimeSuggestions('startsAt')" (keydown.escape)="hideTimeSuggestions()" />
+        <ng-container [ngTemplateOutlet]="timeSuggestionsList" [ngTemplateOutletContext]="{ $implicit: 'startsAt' }" />
+      </div>
+    </hlm-field>
+    <hlm-field>
+      <label hlmFieldLabel for="entry-end">End time</label>
+      <div class="relative">
+        <input id="entry-end" hlmInput type="time" formControlName="endsAt" aria-haspopup="listbox" [attr.aria-expanded]="timeSuggestionTarget() === 'endsAt'" (focus)="showTimeSuggestions('endsAt')" (click)="showTimeSuggestions('endsAt')" (keydown.escape)="hideTimeSuggestions()" />
+        <ng-container [ngTemplateOutlet]="timeSuggestionsList" [ngTemplateOutletContext]="{ $implicit: 'endsAt' }" />
+      </div>
+      <p class="text-muted-foreground text-xs">An end time at or before the start continues into the next day.</p>
+    </hlm-field>
+  </div>
+
+  <hlm-field>
+    <label hlmFieldLabel for="entry-notes">Notes</label>
+    <textarea id="entry-notes" hlmTextarea rows="3" formControlName="notes"></textarea>
+  </hlm-field>
+
+  @if (errorMessage.value; as error) {
+    <p class="text-destructive text-sm" role="alert" aria-live="assertive">{{ error }}</p>
+  }
+
+  <hlm-dialog-footer>
+    @if (entry) {
+      <button hlmBtn type="button" variant="destructive" class="sm:mr-auto" [disabled]="saving.value || deleting.value" (click)="delete()">
+        {{ deleting.value ? 'Deleting…' : 'Delete' }}
+      </button>
+    }
+    <button hlmBtn type="button" variant="outline" hlmDialogClose [disabled]="saving.value || deleting.value">Cancel</button>
+    <button hlmBtn type="submit" [disabled]="saving.value || deleting.value || form.invalid">
+      {{ saving.value ? 'Saving…' : 'Save' }}
+    </button>
+  </hlm-dialog-footer>
+</form>
+
+<ng-template #timeSuggestionsList let-control>
+  @if (timeSuggestionTarget() === control && timeSuggestions.length) {
+    <div class="border-border bg-popover absolute z-10 mt-1 w-full rounded-md border p-1 shadow-md" role="listbox" aria-label="Suggested shift times">
+      @for (template of timeSuggestions; track template.id) {
+        <button type="button" class="hover:bg-accent focus-visible:ring-ring w-full rounded-sm px-2 py-1.5 text-left text-sm focus-visible:ring-2 focus-visible:outline-none" role="option" (click)="applyTimeSuggestion(template)">
+          {{ template.start_time.slice(0, 5) }} - {{ template.end_time.slice(0, 5) }}
+        </button>
+      }
+    </div>
+  }
+</ng-template>

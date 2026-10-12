@@ -3,7 +3,7 @@
     <div class="space-y-1">
       <p class="text-muted-foreground text-sm font-medium uppercase tracking-[0.2em]">Settings</p>
       <div>
-        <h1 class="text-3xl font-semibold tracking-tight">Zones</h1>
+        <h1 class="text-3xl font-semibold tracking-tight">Work areas</h1>
         <p class="text-muted-foreground text-sm">
           Manage the areas where employees can work during a shift.
         </p>
@@ -11,25 +11,25 @@
     </div>
 
     <button hlmBtn type="button" routerLink="new">
-      New zone
+      New work area
     </button>
   </div>
 
-  @if (zonesResource.isLoading()) {
+  @if (workAreasResource.isLoading()) {
     <hlm-card>
       <div hlmCardContent class="flex min-h-64 flex-col items-center justify-center gap-3 py-10 text-center">
         <div class="bg-muted h-10 w-10 animate-pulse rounded-full"></div>
         <div class="space-y-1">
-          <p class="font-medium">Loading zones</p>
-          <p class="text-muted-foreground text-sm">Fetching company work areas from the backend.</p>
+          <p class="font-medium">Loading work areas</p>
+          <p class="text-muted-foreground text-sm">Fetching work areas for the active installation.</p>
         </div>
       </div>
     </hlm-card>
-  } @else if (zonesError(); as errorMessage) {
+  } @else if (workAreasError(); as errorMessage) {
     <hlm-card>
       <div hlmCardContent class="flex min-h-64 flex-col items-center justify-center gap-4 py-10 text-center">
         <div class="space-y-1">
-          <p class="font-medium">Zones are unavailable</p>
+          <p class="font-medium">Work areas are unavailable</p>
           <p class="text-muted-foreground text-sm" aria-live="polite">{{ errorMessage }}</p>
         </div>
 
@@ -38,18 +38,18 @@
         </button>
       </div>
     </hlm-card>
-  } @else if (zones().length === 0) {
+  } @else if (workAreas().length === 0) {
     <hlm-card>
       <div hlmCardContent class="flex min-h-64 flex-col items-center justify-center gap-3 py-10 text-center">
         <div class="space-y-1">
-          <p class="font-medium">No zones yet</p>
+          <p class="font-medium">No work areas yet</p>
           <p class="text-muted-foreground text-sm">
-            Create your first zone to define where employees can be assigned.
+            Create your first work area to define where employees can be assigned.
           </p>
         </div>
 
         <button hlmBtn type="button" routerLink="new">
-          Create first zone
+          Create first work area
         </button>
       </div>
     </hlm-card>
@@ -65,33 +65,33 @@
           </tr>
         </thead>
         <tbody hlmTableBody>
-          @for (zone of zones(); track zone.id) {
+          @for (workArea of workAreas(); track workArea.id) {
             <tr hlmTableRow>
               <td hlmTableCell class="font-medium">
                 <div class="flex items-center gap-2">
-                  <span class="size-3 shrink-0 rounded-full border border-black/10" [style.background-color]="zone.color" [hlmTooltip]="zone.color || 'Sin color asignado'" [attr.aria-label]="zone.color ? 'Color asignado: ' + zone.color : 'Sin color asignado'"></span>
-                  <span>{{ zone.name }}</span>
+                  <span class="size-3 shrink-0 rounded-full border border-black/10" [style.background-color]="workArea.color" [hlmTooltip]="workArea.color || 'No color assigned'" [attr.aria-label]="workArea.color ? 'Assigned color: ' + workArea.color : 'No color assigned'"></span>
+                  <span>{{ workArea.name }}</span>
                 </div>
               </td>
-              <td hlmTableCell class="text-muted-foreground">{{ zone.code || '—' }}</td>
-              <td hlmTableCell class="text-muted-foreground">{{ zone.description || '—' }}</td>
+              <td hlmTableCell class="text-muted-foreground">{{ workArea.code || '—' }}</td>
+              <td hlmTableCell class="text-muted-foreground">{{ workArea.description || '—' }}</td>
                <td hlmTableCell class="text-right">
                 <div class="flex justify-end gap-2">
-                  <button hlmBtn type="button" variant="outline" size="sm" [routerLink]="[zone.id, 'edit']">Edit</button>
+                  <button hlmBtn type="button" variant="outline" size="sm" [routerLink]="[workArea.id, 'edit']">Edit</button>
                   <hlm-alert-dialog>
-                    <button hlmAlertDialogTrigger hlmBtn type="button" variant="destructive" size="sm" [disabled]="isDeleting(zone.id)">
+                    <button hlmAlertDialogTrigger hlmBtn type="button" variant="destructive" size="sm" [disabled]="isDeleting(workArea.id)">
                       Delete
                     </button>
                     <hlm-alert-dialog-content *hlmAlertDialogPortal>
                       <hlm-alert-dialog-header>
-                        <h2 hlmAlertDialogTitle>Delete zone?</h2>
+                        <h2 hlmAlertDialogTitle>Delete work area?</h2>
                         <p hlmAlertDialogDescription>
-                          This will permanently remove <span class="font-medium">{{ zone.name }}</span> from this company.
+                          This will permanently remove <span class="font-medium">{{ workArea.name }}</span> from the active installation.
                         </p>
                       </hlm-alert-dialog-header>
                       <hlm-alert-dialog-footer>
                         <button hlmAlertDialogCancel type="button">Cancel</button>
-                        <button hlmAlertDialogAction type="button" variant="destructive" [disabled]="isDeleting(zone.id)" (click)="deleteZone(zone.id, zone.name)">
+                        <button hlmAlertDialogAction type="button" variant="destructive" [disabled]="isDeleting(workArea.id)" (click)="deleteWorkArea(workArea.id)">
                           Delete
                         </button>
                       </hlm-alert-dialog-footer>

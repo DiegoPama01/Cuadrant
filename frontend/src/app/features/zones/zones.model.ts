@@ -1,38 +1,20 @@
-export interface Zone {
+export interface WorkArea {
   id: string;
   installation?: string | null;
   name: string;
   code?: string | null;
   description?: string | null;
   color: string;
-  active?: boolean;
-  created_at?: string;
-  updated_at?: string;
-  staff_requirements?: ZoneStaffRequirementGroup[];
+  sort_order: number;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface ZoneStaffRequirementGroup {
-  id: string;
-  shift: string;
-  positions: ZonePositionRequirement[];
-}
-
-export interface ZonePositionRequirement {
-  position: string;
-  required_count: number;
-}
-
-export interface ZoneUpsertPayload {
-  installation?: string;
+export interface WorkAreaUpsertPayload {
   name: string;
   code: string;
   description: string;
   color: string;
   active: boolean;
-  staff_requirements: ZoneStaffRequirementInput[];
-}
-
-export interface ZoneStaffRequirementInput {
-  shift: string;
-  positions: ZonePositionRequirement[];
 }

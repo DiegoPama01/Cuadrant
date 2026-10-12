@@ -2,10 +2,9 @@ import { ChangeDetectionStrategy, Component, computed, inject, resource, signal 
 import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { randomFormColor } from '../../shared/color-utils';
-import { CompanyService } from '../../core/company/company.service';
 import { ShiftsFormComponent } from './shifts-form.component';
-import { ShiftUpsertPayload } from './shifts.model';
-import { ShiftsService } from './shifts.service';
+import { ShiftTemplateUpsertPayload } from './shifts.model';
+import { ShiftTemplatesService } from '../planning/shift-templates.service';
 
 @Component({
   selector: 'app-shifts-form-page',
@@ -16,8 +15,7 @@ import { ShiftsService } from './shifts.service';
 export class ShiftsFormPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly shiftsService = inject(ShiftsService);
-  private readonly companyService = inject(CompanyService);
+  private readonly shiftTemplatesService = inject(ShiftTemplatesService);
 
   private readonly shiftId = this.route.snapshot.paramMap.get('id');
   protected readonly isEditMode = this.shiftId !== null;
@@ -29,18 +27,18 @@ export class ShiftsFormPageComponent {
         return null;
       }
 
-      return firstValueFrom(this.shiftsService.get(this.shiftId));
+      return firstValueFrom(this.shiftTemplatesService.get(this.shiftId));
     },
   });
 
-  protected readonly initialValue = computed<ShiftUpsertPayload>(() => {
+  protected readonly initialValue = computed<ShiftTemplateUpsertPayload>(() => {
     const shift = this.shiftResource.value();
 
     if (!shift) {
       return {
         name: '',
-        installation: this.companyService.getActiveInstallationId() ?? undefined,
         code: '',
+        description: '',
         start_time: '',
         end_time: '',
         break_minutes: 0,
@@ -50,30 +48,30 @@ export class ShiftsFormPageComponent {
     }
 
     return {
-      installation: shift.installation ?? undefined,
       name: shift.name,
       code: shift.code ?? '',
+      description: shift.description ?? '',
       start_time: shift.start_time,
       end_time: shift.end_time,
       break_minutes: shift.break_minutes ?? 0,
       color: shift.color,
-      active: shift.active ?? true,
+      active: shift.active,
     };
   });
 
-  protected async saveShift(payload: ShiftUpsertPayload): Promise<void> {
+  protected async saveShiftTemplate(payload: ShiftTemplateUpsertPayload): Promise<void> {
     this.formError.set(null);
 
     try {
       if (this.shiftId) {
-        await firstValueFrom(this.shiftsService.update(this.shiftId, payload));
+        await firstValueFrom(this.shiftTemplatesService.update(this.shiftId, payload));
       } else {
-        await firstValueFrom(this.shiftsService.create(payload));
+        await firstValueFrom(this.shiftTemplatesService.create(payload));
       }
 
-      await this.router.navigate(['/settings/shifts']);
+      await this.router.navigate(['/settings/shift-templates']);
     } catch {
-      this.formError.set('We could not save this shift. Please review the form and try again.');
+      this.formError.set('We could not save this shift template. Please review the form and try again.');
     }
   }
 

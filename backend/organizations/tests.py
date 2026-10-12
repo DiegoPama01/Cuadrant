@@ -48,7 +48,17 @@ class OrganizationApiTests(APITestCase):
         response = self.client.get("/api/companies/")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual([item["id"] for item in response.data], [str(self.company.id)])
+        self.assertEqual(
+            {item["id"] for item in response.data},
+            set(
+                map(
+                    str,
+                    CompanyMembership.objects.filter(user=self.owner).values_list(
+                        "company_id", flat=True
+                    ),
+                )
+            ),
+        )
 
     def test_company_create_assigns_owner_and_initial_installation(self):
         self.client.force_authenticate(self.owner)

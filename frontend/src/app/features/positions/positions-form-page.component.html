@@ -3,7 +3,7 @@
     <p class="text-muted-foreground text-sm font-medium uppercase tracking-[0.2em]">Settings</p>
     <div>
       <h1 class="text-3xl font-semibold tracking-tight">
-        {{ isEditMode ? 'Edit position' : 'New position' }}
+        {{ isEditMode ? 'Edit job role' : 'New job role' }}
       </h1>
       <p class="text-muted-foreground text-sm">
         {{ isEditMode ? 'Update an existing role used in planning assignments.' : 'Create a role your team can be assigned to during planning.' }}
@@ -12,14 +12,14 @@
   </div>
 
   @if (isEditMode && positionResource.isLoading()) {
-    <div class="bg-card rounded-lg border p-6 text-sm">Loading position details...</div>
+    <div class="bg-card rounded-lg border p-6 text-sm">Loading job role details...</div>
   } @else {
     <app-positions-form
       [initialValue]="initialValue()"
-      [submitLabel]="isEditMode ? 'Save changes' : 'Create position'"
+      [submitLabel]="isEditMode ? 'Save changes' : 'Create job role'"
       [formError]="formError()"
-      [submitForm]="savePosition.bind(this)"
-      cancelLink="/settings/positions"
+      [submitForm]="saveJobRole.bind(this)"
+      cancelLink="/settings/job-roles"
     />
   }
 </section>

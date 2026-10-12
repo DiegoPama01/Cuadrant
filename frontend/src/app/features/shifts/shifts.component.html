@@ -3,7 +3,7 @@
     <div class="space-y-1">
       <p class="text-muted-foreground text-sm font-medium uppercase tracking-[0.2em]">Settings</p>
       <div>
-        <h1 class="text-3xl font-semibold tracking-tight">Shifts</h1>
+        <h1 class="text-3xl font-semibold tracking-tight">Shift templates</h1>
         <p class="text-muted-foreground text-sm">
           Manage the time windows employees can be assigned to across the schedule.
         </p>
@@ -11,25 +11,25 @@
     </div>
 
     <button hlmBtn type="button" routerLink="new">
-      New shift
+      New shift template
     </button>
   </div>
 
-  @if (shiftsResource.isLoading()) {
+  @if (shiftTemplatesResource.isLoading()) {
     <hlm-card>
       <div hlmCardContent class="flex min-h-64 flex-col items-center justify-center gap-3 py-10 text-center">
         <div class="bg-muted h-10 w-10 animate-pulse rounded-full"></div>
         <div class="space-y-1">
-          <p class="font-medium">Loading shifts</p>
-          <p class="text-muted-foreground text-sm">Fetching company shift definitions from the backend.</p>
+          <p class="font-medium">Loading shift templates</p>
+          <p class="text-muted-foreground text-sm">Fetching shift templates for the active installation.</p>
         </div>
       </div>
     </hlm-card>
-  } @else if (shiftsError(); as errorMessage) {
+  } @else if (shiftTemplatesError(); as errorMessage) {
     <hlm-card>
       <div hlmCardContent class="flex min-h-64 flex-col items-center justify-center gap-4 py-10 text-center">
         <div class="space-y-1">
-          <p class="font-medium">Shifts are unavailable</p>
+          <p class="font-medium">Shift templates are unavailable</p>
           <p class="text-muted-foreground text-sm" aria-live="polite">{{ errorMessage }}</p>
         </div>
 
@@ -38,18 +38,18 @@
         </button>
       </div>
     </hlm-card>
-  } @else if (shifts().length === 0) {
+  } @else if (shiftTemplates().length === 0) {
     <hlm-card>
       <div hlmCardContent class="flex min-h-64 flex-col items-center justify-center gap-3 py-10 text-center">
         <div class="space-y-1">
-          <p class="font-medium">No shifts yet</p>
+          <p class="font-medium">No shift templates yet</p>
           <p class="text-muted-foreground text-sm">
-            Create your first shift to define available working hours.
+            Create your first shift template to define available working hours.
           </p>
         </div>
 
         <button hlmBtn type="button" routerLink="new">
-          Create first shift
+          Create first shift template
         </button>
       </div>
     </hlm-card>
@@ -65,33 +65,33 @@
           </tr>
         </thead>
         <tbody hlmTableBody>
-          @for (shift of shifts(); track shift.id) {
+          @for (shiftTemplate of shiftTemplates(); track shiftTemplate.id) {
             <tr hlmTableRow>
               <td hlmTableCell class="font-medium">
                 <div class="flex items-center gap-2">
-                  <span class="size-3 shrink-0 rounded-full border border-black/10" [style.background-color]="shift.color" [hlmTooltip]="shift.color || 'Sin color asignado'" [attr.aria-label]="shift.color ? 'Color asignado: ' + shift.color : 'Sin color asignado'"></span>
-                  <span>{{ shift.name }}</span>
+                  <span class="size-3 shrink-0 rounded-full border border-black/10" [style.background-color]="shiftTemplate.color" [hlmTooltip]="shiftTemplate.color || 'No color assigned'" [attr.aria-label]="shiftTemplate.color ? 'Assigned color: ' + shiftTemplate.color : 'No color assigned'"></span>
+                  <span>{{ shiftTemplate.name }}</span>
                 </div>
               </td>
-              <td hlmTableCell class="text-muted-foreground">{{ shift.code || '—' }}</td>
-              <td hlmTableCell class="text-muted-foreground">{{ shift.start_time }} - {{ shift.end_time }}</td>
+              <td hlmTableCell class="text-muted-foreground">{{ shiftTemplate.code || '—' }}</td>
+              <td hlmTableCell class="text-muted-foreground">{{ shiftTemplate.start_time }} - {{ shiftTemplate.end_time }}</td>
                <td hlmTableCell class="text-right">
                 <div class="flex justify-end gap-2">
-                  <button hlmBtn type="button" variant="outline" size="sm" [routerLink]="[shift.id, 'edit']">Edit</button>
+                  <button hlmBtn type="button" variant="outline" size="sm" [routerLink]="[shiftTemplate.id, 'edit']">Edit</button>
                   <hlm-alert-dialog>
-                    <button hlmAlertDialogTrigger hlmBtn type="button" variant="destructive" size="sm" [disabled]="isDeleting(shift.id)">
+                    <button hlmAlertDialogTrigger hlmBtn type="button" variant="destructive" size="sm" [disabled]="isDeleting(shiftTemplate.id)">
                       Delete
                     </button>
                     <hlm-alert-dialog-content *hlmAlertDialogPortal>
                       <hlm-alert-dialog-header>
-                        <h2 hlmAlertDialogTitle>Delete shift?</h2>
+                        <h2 hlmAlertDialogTitle>Delete shift template?</h2>
                         <p hlmAlertDialogDescription>
-                          This will permanently remove <span class="font-medium">{{ shift.name }}</span> from this company.
+                          This will permanently remove <span class="font-medium">{{ shiftTemplate.name }}</span> from the active installation.
                         </p>
                       </hlm-alert-dialog-header>
                       <hlm-alert-dialog-footer>
                         <button hlmAlertDialogCancel type="button">Cancel</button>
-                        <button hlmAlertDialogAction type="button" variant="destructive" [disabled]="isDeleting(shift.id)" (click)="deleteShift(shift.id, shift.name)">
+                        <button hlmAlertDialogAction type="button" variant="destructive" [disabled]="isDeleting(shiftTemplate.id)" (click)="deleteShiftTemplate(shiftTemplate.id)">
                           Delete
                         </button>
                       </hlm-alert-dialog-footer>

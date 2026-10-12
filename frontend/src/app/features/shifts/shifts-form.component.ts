@@ -6,8 +6,9 @@ import { HlmCardImports } from '@spartan-ng/helm/card';
 import { HlmFieldImports } from '@spartan-ng/helm/field';
 import { HlmInputImports } from '@spartan-ng/helm/input';
 import { HlmSwitchImports } from '@spartan-ng/helm/switch';
+import { HlmTextareaImports } from '@spartan-ng/helm/textarea';
 import { randomFormColor } from '../../shared/color-utils';
-import { ShiftUpsertPayload } from './shifts.model';
+import { ShiftTemplateUpsertPayload } from './shifts.model';
 
 @Component({
   selector: 'app-shifts-form',
@@ -18,26 +19,27 @@ import { ShiftUpsertPayload } from './shifts.model';
     HlmCardImports,
     HlmFieldImports,
     HlmInputImports,
-    HlmSwitchImports,
+    HlmSwitchImports, HlmTextareaImports,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './shifts-form.component.html',
 })
 export class ShiftsFormComponent {
   private readonly router = inject(Router);
-  readonly initialValue = input.required<ShiftUpsertPayload>();
-  readonly submitLabel = input('Save shift');
+  readonly initialValue = input.required<ShiftTemplateUpsertPayload>();
+  readonly submitLabel = input('Save shift template');
   readonly formError = input<string | null>(null);
-  readonly submitForm = input.required<(value: ShiftUpsertPayload) => Promise<void>>();
+  readonly submitForm = input.required<(value: ShiftTemplateUpsertPayload) => Promise<void>>();
   readonly cancelLink = input.required<string>();
 
   protected async cancel(): Promise<void> {
     await this.router.navigateByUrl(this.cancelLink());
   }
 
-  protected readonly model = signal<ShiftUpsertPayload>({
+  protected readonly model = signal<ShiftTemplateUpsertPayload>({
     name: '',
     code: '',
+    description: '',
     start_time: '',
     end_time: '',
     break_minutes: 0,

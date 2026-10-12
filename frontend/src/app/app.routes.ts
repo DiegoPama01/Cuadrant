@@ -120,9 +120,9 @@ export const routes: Routes = [
             ],
           },
           {
-            path: 'positions',
+            path: 'job-roles',
             data: {
-              breadcrumb: 'Positions',
+              breadcrumb: 'Job roles',
             },
             children: [
               {
@@ -154,9 +154,9 @@ export const routes: Routes = [
             ],
           },
           {
-            path: 'zones',
+            path: 'work-areas',
             data: {
-              breadcrumb: 'Zones',
+              breadcrumb: 'Work areas',
             },
             children: [
               {
@@ -188,9 +188,9 @@ export const routes: Routes = [
             ],
           },
           {
-            path: 'shifts',
+            path: 'shift-templates',
             data: {
-              breadcrumb: 'Shifts',
+              breadcrumb: 'Shift templates',
             },
             children: [
               {

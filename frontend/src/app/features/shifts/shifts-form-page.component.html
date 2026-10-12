@@ -2,7 +2,7 @@
   <div class="space-y-1">
     <p class="text-muted-foreground text-sm font-medium uppercase tracking-[0.2em]">Settings</p>
     <div>
-      <h1 class="text-3xl font-semibold tracking-tight">{{ isEditMode ? 'Edit shift' : 'New shift' }}</h1>
+      <h1 class="text-3xl font-semibold tracking-tight">{{ isEditMode ? 'Edit shift template' : 'New shift template' }}</h1>
       <p class="text-muted-foreground text-sm">
         {{ isEditMode ? 'Update an existing shift definition used in planning.' : 'Create a shift definition for workforce scheduling.' }}
       </p>
@@ -10,14 +10,14 @@
   </div>
 
   @if (isEditMode && shiftResource.isLoading()) {
-    <div class="bg-card rounded-lg border p-6 text-sm">Loading shift details...</div>
+    <div class="bg-card rounded-lg border p-6 text-sm">Loading shift template details...</div>
   } @else {
     <app-shifts-form
       [initialValue]="initialValue()"
-      [submitLabel]="isEditMode ? 'Save changes' : 'Create shift'"
+      [submitLabel]="isEditMode ? 'Save changes' : 'Create shift template'"
       [formError]="formError()"
-      [submitForm]="saveShift.bind(this)"
-      cancelLink="/settings/shifts"
+      [submitForm]="saveShiftTemplate.bind(this)"
+      cancelLink="/settings/shift-templates"
     />
   }
 </section>

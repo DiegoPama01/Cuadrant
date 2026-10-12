@@ -8,7 +8,7 @@ import { HlmInputImports } from '@spartan-ng/helm/input';
 import { HlmSwitchImports } from '@spartan-ng/helm/switch';
 import { HlmTextareaImports } from '@spartan-ng/helm/textarea';
 import { randomFormColor } from '../../shared/color-utils';
-import { PositionUpsertPayload } from './positions.model';
+import { JobRoleUpsertPayload } from '../job-roles/job-roles.model';
 
 @Component({
   selector: 'app-positions-form',
@@ -18,17 +18,17 @@ import { PositionUpsertPayload } from './positions.model';
 })
 export class PositionsFormComponent {
   private readonly router = inject(Router);
-  readonly initialValue = input.required<PositionUpsertPayload>();
-  readonly submitLabel = input('Save position');
+  readonly initialValue = input.required<JobRoleUpsertPayload>();
+  readonly submitLabel = input('Save job role');
   readonly formError = input<string | null>(null);
-  readonly submitForm = input.required<(value: PositionUpsertPayload) => Promise<void>>();
+  readonly submitForm = input.required<(value: JobRoleUpsertPayload) => Promise<void>>();
   readonly cancelLink = input.required<string>();
 
   protected async cancel(): Promise<void> {
     await this.router.navigateByUrl(this.cancelLink());
   }
 
-  protected readonly model = signal<PositionUpsertPayload>({
+  protected readonly model = signal<JobRoleUpsertPayload>({
     name: '',
     code: '',
     description: '',

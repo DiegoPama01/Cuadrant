@@ -1,22 +1,26 @@
 <section class="flex min-w-0 flex-1 flex-col gap-6">
   <div class="space-y-1">
-    <p class="text-muted-foreground text-sm font-medium uppercase tracking-[0.2em]">Management</p>
+    <p class="text-muted-foreground text-sm font-medium uppercase tracking-[0.2em]">Gestión</p>
     <div>
-      <h1 class="text-3xl font-semibold tracking-tight">{{ isEditMode ? 'Edit employee' : 'New employee' }}</h1>
+      <h1 class="text-3xl font-semibold tracking-tight">{{ isEditMode ? 'Editar empleado' : 'Nuevo empleado' }}</h1>
       <p class="text-muted-foreground text-sm">
-        {{ isEditMode ? 'Update a team member and their planning permissions.' : 'Create a new team member and assign their planning rules.' }}
+        {{ isEditMode ? 'Actualiza los datos personales y los puestos del empleado.' : 'Crea un empleado y asigna al menos un puesto.' }}
       </p>
     </div>
   </div>
 
   @if (employeeFormResource.isLoading()) {
-    <div class="bg-card rounded-lg border p-6 text-sm">Loading employee form...</div>
+    <div class="bg-card rounded-lg border p-6 text-sm" aria-live="polite">Cargando formulario de empleado...</div>
+  } @else if (loadError(); as errorMessage) {
+    <div class="bg-card flex flex-col items-start gap-4 rounded-lg border p-6">
+      <p class="text-sm text-red-600" role="alert">{{ errorMessage }}</p>
+      <button type="button" class="rounded-md border px-3 py-2 text-sm font-medium" (click)="reload()">Reintentar</button>
+    </div>
   } @else {
     <app-employees-form
       [initialValue]="initialValue()"
-      [positions]="positions()"
-      [zones]="zones()"
-      [submitLabel]="isEditMode ? 'Save changes' : 'Create employee'"
+      [jobRoles]="jobRoles()"
+      [submitLabel]="isEditMode ? 'Guardar cambios' : 'Crear empleado'"
       [formError]="formError()"
       [submitForm]="saveEmployee.bind(this)"
       cancelLink="/employees"

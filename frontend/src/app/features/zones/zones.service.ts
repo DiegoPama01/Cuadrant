@@ -2,19 +2,19 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, shareReplay, tap } from 'rxjs';
 import { CompanyService } from '../../core/company/company.service';
-import { Zone, ZoneUpsertPayload } from './zones.model';
+import { WorkArea, WorkAreaUpsertPayload } from './zones.model';
 
 @Injectable({
   providedIn: 'root',
 })
-export class ZonesService {
+export class WorkAreasService {
   private readonly http = inject(HttpClient);
   private readonly companyService = inject(CompanyService);
-  private readonly listCache = new Map<string, Observable<Zone[]>>();
-  private readonly resourceCache = new Map<string, Observable<Zone>>();
+  private readonly listCache = new Map<string, Observable<WorkArea[]>>();
+  private readonly resourceCache = new Map<string, Observable<WorkArea>>();
 
-  list(): Observable<Zone[]> {
-    const url = this.companyService.buildCompanyApiUrl('zones');
+  list(): Observable<WorkArea[]> {
+    const url = this.companyService.buildInstallationApiUrl('work-areas');
     const cached = this.listCache.get(url);
 
     if (cached) {
@@ -22,47 +22,47 @@ export class ZonesService {
     }
 
     const request = this.http
-      .get<Zone[]>(url)
+      .get<WorkArea[]>(url)
       .pipe(shareReplay({ bufferSize: 1, refCount: false }));
     this.listCache.set(url, request);
 
     return request;
   }
 
-  get(zoneId: string): Observable<Zone> {
-    const url = this.companyService.buildCompanyResourceUrl('zones', zoneId);
+  get(workAreaId: string): Observable<WorkArea> {
+    const url = this.companyService.buildInstallationResourceUrl('work-areas', workAreaId);
     const cached = this.resourceCache.get(url);
 
     if (cached) {
       return cached;
     }
 
-    const request = this.http.get<Zone>(url).pipe(shareReplay({ bufferSize: 1, refCount: false }));
+    const request = this.http.get<WorkArea>(url).pipe(shareReplay({ bufferSize: 1, refCount: false }));
     this.resourceCache.set(url, request);
 
     return request;
   }
 
-  create(payload: ZoneUpsertPayload): Observable<Zone> {
-    const collectionUrl = this.companyService.buildCompanyApiUrl('zones');
+  create(payload: WorkAreaUpsertPayload): Observable<WorkArea> {
+    const collectionUrl = this.companyService.buildInstallationApiUrl('work-areas');
 
     return this.http
-      .post<Zone>(collectionUrl, payload)
+      .post<WorkArea>(collectionUrl, payload)
       .pipe(tap(() => this.invalidateCollection(collectionUrl)));
   }
 
-  update(zoneId: string, payload: ZoneUpsertPayload): Observable<Zone> {
-    const collectionUrl = this.companyService.buildCompanyApiUrl('zones');
-    const resourceUrl = this.companyService.buildCompanyResourceUrl('zones', zoneId);
+  update(workAreaId: string, payload: WorkAreaUpsertPayload): Observable<WorkArea> {
+    const collectionUrl = this.companyService.buildInstallationApiUrl('work-areas');
+    const resourceUrl = this.companyService.buildInstallationResourceUrl('work-areas', workAreaId);
 
     return this.http
-      .put<Zone>(resourceUrl, payload)
+      .put<WorkArea>(resourceUrl, payload)
       .pipe(tap(() => this.invalidateCollection(collectionUrl)));
   }
 
-  delete(zoneId: string): Observable<void> {
-    const collectionUrl = this.companyService.buildCompanyApiUrl('zones');
-    const resourceUrl = this.companyService.buildCompanyResourceUrl('zones', zoneId);
+  delete(workAreaId: string): Observable<void> {
+    const collectionUrl = this.companyService.buildInstallationApiUrl('work-areas');
+    const resourceUrl = this.companyService.buildInstallationResourceUrl('work-areas', workAreaId);
 
     return this.http
       .delete<void>(resourceUrl)

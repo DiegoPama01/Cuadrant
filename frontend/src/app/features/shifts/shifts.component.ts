@@ -13,7 +13,7 @@ import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { HlmTableImports } from '@spartan-ng/helm/table';
 import { HlmTooltipImports } from '@spartan-ng/helm/tooltip';
-import { ShiftsService } from './shifts.service';
+import { ShiftTemplatesService } from '../planning/shift-templates.service';
 
 @Component({
   selector: 'app-shifts',
@@ -22,17 +22,17 @@ import { ShiftsService } from './shifts.service';
   templateUrl: './shifts.component.html',
 })
 export class ShiftsComponent {
-  private readonly shiftsService = inject(ShiftsService);
+  private readonly shiftTemplatesService = inject(ShiftTemplatesService);
   private readonly deletingIds = signal<Set<string>>(new Set());
 
-  protected readonly shiftsResource = resource({
-    loader: async () => firstValueFrom(this.shiftsService.list()),
+  protected readonly shiftTemplatesResource = resource({
+    loader: async () => firstValueFrom(this.shiftTemplatesService.list()),
   });
 
-  protected readonly shifts = computed(() => this.shiftsResource.value() ?? []);
+  protected readonly shiftTemplates = computed(() => this.shiftTemplatesResource.value() ?? []);
   protected readonly isDeleting = (shiftId: string) => this.deletingIds().has(shiftId);
-  protected readonly shiftsError = computed(() => {
-    const error = this.shiftsResource.error();
+  protected readonly shiftTemplatesError = computed(() => {
+    const error = this.shiftTemplatesResource.error();
 
     if (!error) {
       return null;
@@ -40,23 +40,23 @@ export class ShiftsComponent {
 
     return error instanceof Error
       ? error.message
-      : 'We could not load shifts right now. Please try again.';
+      : 'We could not load shift templates right now. Please try again.';
   });
 
   protected reload(): void {
-    void this.shiftsResource.reload();
+    void this.shiftTemplatesResource.reload();
   }
 
-  protected async deleteShift(shiftId: string, shiftName: string): Promise<void> {
-    this.deletingIds.update((ids) => new Set(ids).add(shiftId));
+  protected async deleteShiftTemplate(shiftTemplateId: string): Promise<void> {
+    this.deletingIds.update((ids) => new Set(ids).add(shiftTemplateId));
 
     try {
-      await firstValueFrom(this.shiftsService.delete(shiftId));
-      await this.shiftsResource.reload();
+      await firstValueFrom(this.shiftTemplatesService.delete(shiftTemplateId));
+      await this.shiftTemplatesResource.reload();
     } finally {
       this.deletingIds.update((ids) => {
         const next = new Set(ids);
-        next.delete(shiftId);
+        next.delete(shiftTemplateId);
         return next;
       });
     }

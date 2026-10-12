@@ -13,7 +13,7 @@ import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { HlmTableImports } from '@spartan-ng/helm/table';
 import { HlmTooltipImports } from '@spartan-ng/helm/tooltip';
-import { ZonesService } from './zones.service';
+import { WorkAreasService } from './zones.service';
 
 @Component({
   selector: 'app-zones',
@@ -22,17 +22,17 @@ import { ZonesService } from './zones.service';
   templateUrl: './zones.component.html',
 })
 export class ZonesComponent {
-  private readonly zonesService = inject(ZonesService);
+  private readonly workAreasService = inject(WorkAreasService);
   private readonly deletingIds = signal<Set<string>>(new Set());
 
-  protected readonly zonesResource = resource({
-    loader: async () => firstValueFrom(this.zonesService.list()),
+  protected readonly workAreasResource = resource({
+    loader: async () => firstValueFrom(this.workAreasService.list()),
   });
 
-  protected readonly zones = computed(() => this.zonesResource.value() ?? []);
+  protected readonly workAreas = computed(() => this.workAreasResource.value() ?? []);
   protected readonly isDeleting = (zoneId: string) => this.deletingIds().has(zoneId);
-  protected readonly zonesError = computed(() => {
-    const error = this.zonesResource.error();
+  protected readonly workAreasError = computed(() => {
+    const error = this.workAreasResource.error();
 
     if (!error) {
       return null;
@@ -40,23 +40,23 @@ export class ZonesComponent {
 
     return error instanceof Error
       ? error.message
-      : 'We could not load zones right now. Please try again.';
+      : 'We could not load work areas right now. Please try again.';
   });
 
   protected reload(): void {
-    void this.zonesResource.reload();
+    void this.workAreasResource.reload();
   }
 
-  protected async deleteZone(zoneId: string, zoneName: string): Promise<void> {
-    this.deletingIds.update((ids) => new Set(ids).add(zoneId));
+  protected async deleteWorkArea(workAreaId: string): Promise<void> {
+    this.deletingIds.update((ids) => new Set(ids).add(workAreaId));
 
     try {
-      await firstValueFrom(this.zonesService.delete(zoneId));
-      await this.zonesResource.reload();
+      await firstValueFrom(this.workAreasService.delete(workAreaId));
+      await this.workAreasResource.reload();
     } finally {
       this.deletingIds.update((ids) => {
         const next = new Set(ids);
-        next.delete(zoneId);
+        next.delete(workAreaId);
         return next;
       });
     }
