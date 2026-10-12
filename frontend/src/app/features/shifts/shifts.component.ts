@@ -6,23 +6,31 @@ import {
   resource,
   signal,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { HlmAlertDialogImports } from '@spartan-ng/helm/alert-dialog';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
+import { HlmDialogService } from '@spartan-ng/helm/dialog';
 import { HlmTableImports } from '@spartan-ng/helm/table';
 import { HlmTooltipImports } from '@spartan-ng/helm/tooltip';
 import { ShiftTemplatesService } from '../planning/shift-templates.service';
+import { ShiftTemplateDialogContext, ShiftsFormPageComponent } from './shifts-form-page.component';
 
 @Component({
   selector: 'app-shifts',
-  imports: [RouterLink, HlmAlertDialogImports, HlmButtonImports, HlmCardImports, HlmTableImports, HlmTooltipImports],
+  imports: [
+    HlmAlertDialogImports,
+    HlmButtonImports,
+    HlmCardImports,
+    HlmTableImports,
+    HlmTooltipImports,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './shifts.component.html',
 })
 export class ShiftsComponent {
   private readonly shiftTemplatesService = inject(ShiftTemplatesService);
+  private readonly dialog = inject(HlmDialogService);
   private readonly deletingIds = signal<Set<string>>(new Set());
 
   protected readonly shiftTemplatesResource = resource({
@@ -45,6 +53,16 @@ export class ShiftsComponent {
 
   protected reload(): void {
     void this.shiftTemplatesResource.reload();
+  }
+
+  protected openShiftTemplateForm(shiftTemplateId?: string): void {
+    this.dialog.open<unknown, ShiftTemplateDialogContext>(ShiftsFormPageComponent, {
+      contentClass: 'max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-4xl',
+      context: {
+        shiftTemplateId,
+        onSaved: () => this.reload(),
+      },
+    });
   }
 
   protected async deleteShiftTemplate(shiftTemplateId: string): Promise<void> {

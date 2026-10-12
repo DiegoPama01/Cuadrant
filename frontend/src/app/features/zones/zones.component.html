@@ -10,37 +10,44 @@
       </div>
     </div>
 
-    <button hlmBtn type="button" routerLink="new">
-      New work area
-    </button>
+    <button hlmBtn type="button" (click)="openWorkAreaForm()">New work area</button>
   </div>
 
   @if (workAreasResource.isLoading()) {
     <hlm-card>
-      <div hlmCardContent class="flex min-h-64 flex-col items-center justify-center gap-3 py-10 text-center">
+      <div
+        hlmCardContent
+        class="flex min-h-64 flex-col items-center justify-center gap-3 py-10 text-center"
+      >
         <div class="bg-muted h-10 w-10 animate-pulse rounded-full"></div>
         <div class="space-y-1">
           <p class="font-medium">Loading work areas</p>
-          <p class="text-muted-foreground text-sm">Fetching work areas for the active installation.</p>
+          <p class="text-muted-foreground text-sm">
+            Fetching work areas for the active installation.
+          </p>
         </div>
       </div>
     </hlm-card>
   } @else if (workAreasError(); as errorMessage) {
     <hlm-card>
-      <div hlmCardContent class="flex min-h-64 flex-col items-center justify-center gap-4 py-10 text-center">
+      <div
+        hlmCardContent
+        class="flex min-h-64 flex-col items-center justify-center gap-4 py-10 text-center"
+      >
         <div class="space-y-1">
           <p class="font-medium">Work areas are unavailable</p>
           <p class="text-muted-foreground text-sm" aria-live="polite">{{ errorMessage }}</p>
         </div>
 
-        <button hlmBtn type="button" variant="outline" (click)="reload()">
-          Retry
-        </button>
+        <button hlmBtn type="button" variant="outline" (click)="reload()">Retry</button>
       </div>
     </hlm-card>
   } @else if (workAreas().length === 0) {
     <hlm-card>
-      <div hlmCardContent class="flex min-h-64 flex-col items-center justify-center gap-3 py-10 text-center">
+      <div
+        hlmCardContent
+        class="flex min-h-64 flex-col items-center justify-center gap-3 py-10 text-center"
+      >
         <div class="space-y-1">
           <p class="font-medium">No work areas yet</p>
           <p class="text-muted-foreground text-sm">
@@ -48,9 +55,7 @@
           </p>
         </div>
 
-        <button hlmBtn type="button" routerLink="new">
-          Create first work area
-        </button>
+        <button hlmBtn type="button" (click)="openWorkAreaForm()">Create first work area</button>
       </div>
     </hlm-card>
   } @else {
@@ -61,7 +66,7 @@
             <th hlmTableHead>Name</th>
             <th hlmTableHead>Code</th>
             <th hlmTableHead>Description</th>
-             <th hlmTableHead class="text-right">Actions</th>
+            <th hlmTableHead class="text-right">Actions</th>
           </tr>
         </thead>
         <tbody hlmTableBody>
@@ -69,29 +74,59 @@
             <tr hlmTableRow>
               <td hlmTableCell class="font-medium">
                 <div class="flex items-center gap-2">
-                  <span class="size-3 shrink-0 rounded-full border border-black/10" [style.background-color]="workArea.color" [hlmTooltip]="workArea.color || 'No color assigned'" [attr.aria-label]="workArea.color ? 'Assigned color: ' + workArea.color : 'No color assigned'"></span>
+                  <span
+                    class="size-3 shrink-0 rounded-full border border-black/10"
+                    [style.background-color]="workArea.color"
+                    [hlmTooltip]="workArea.color || 'No color assigned'"
+                    [attr.aria-label]="
+                      workArea.color ? 'Assigned color: ' + workArea.color : 'No color assigned'
+                    "
+                  ></span>
                   <span>{{ workArea.name }}</span>
                 </div>
               </td>
               <td hlmTableCell class="text-muted-foreground">{{ workArea.code || '—' }}</td>
               <td hlmTableCell class="text-muted-foreground">{{ workArea.description || '—' }}</td>
-               <td hlmTableCell class="text-right">
+              <td hlmTableCell class="text-right">
                 <div class="flex justify-end gap-2">
-                  <button hlmBtn type="button" variant="outline" size="sm" [routerLink]="[workArea.id, 'edit']">Edit</button>
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    (click)="openWorkAreaForm(workArea.id)"
+                  >
+                    Edit
+                  </button>
                   <hlm-alert-dialog>
-                    <button hlmAlertDialogTrigger hlmBtn type="button" variant="destructive" size="sm" [disabled]="isDeleting(workArea.id)">
+                    <button
+                      hlmAlertDialogTrigger
+                      hlmBtn
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      [disabled]="isDeleting(workArea.id)"
+                    >
                       Delete
                     </button>
                     <hlm-alert-dialog-content *hlmAlertDialogPortal>
                       <hlm-alert-dialog-header>
                         <h2 hlmAlertDialogTitle>Delete work area?</h2>
                         <p hlmAlertDialogDescription>
-                          This will permanently remove <span class="font-medium">{{ workArea.name }}</span> from the active installation.
+                          This will permanently remove
+                          <span class="font-medium">{{ workArea.name }}</span> from the active
+                          installation.
                         </p>
                       </hlm-alert-dialog-header>
                       <hlm-alert-dialog-footer>
                         <button hlmAlertDialogCancel type="button">Cancel</button>
-                        <button hlmAlertDialogAction type="button" variant="destructive" [disabled]="isDeleting(workArea.id)" (click)="deleteWorkArea(workArea.id)">
+                        <button
+                          hlmAlertDialogAction
+                          type="button"
+                          variant="destructive"
+                          [disabled]="isDeleting(workArea.id)"
+                          (click)="deleteWorkArea(workArea.id)"
+                        >
                           Delete
                         </button>
                       </hlm-alert-dialog-footer>

@@ -1,8 +1,7 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { ChangeDetectionStrategy, Component, effect, input, output, signal } from '@angular/core';
 import { form, FormField, FormRoot, required } from '@angular/forms/signals';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
-import { HlmCardImports } from '@spartan-ng/helm/card';
+import { HlmDialogImports } from '@spartan-ng/helm/dialog';
 import { HlmFieldImports } from '@spartan-ng/helm/field';
 import { HlmInputImports } from '@spartan-ng/helm/input';
 import { HlmSwitchImports } from '@spartan-ng/helm/switch';
@@ -12,20 +11,28 @@ import { randomFormColor } from '../../shared/color-utils';
 
 @Component({
   selector: 'app-zones-form',
-  imports: [FormRoot, FormField, HlmButtonImports, HlmCardImports, HlmFieldImports, HlmInputImports, HlmSwitchImports, HlmTextareaImports],
+  imports: [
+    FormRoot,
+    FormField,
+    HlmButtonImports,
+    HlmDialogImports,
+    HlmFieldImports,
+    HlmInputImports,
+    HlmSwitchImports,
+    HlmTextareaImports,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './zones-form.component.html',
 })
 export class ZonesFormComponent {
-  private readonly router = inject(Router);
   readonly initialValue = input.required<WorkAreaUpsertPayload>();
   readonly submitLabel = input('Save work area');
   readonly formError = input<string | null>(null);
   readonly submitForm = input.required<(value: WorkAreaUpsertPayload) => Promise<void>>();
-  readonly cancelLink = input.required<string>();
+  readonly cancelled = output<void>();
 
-  protected async cancel(): Promise<void> {
-    await this.router.navigateByUrl(this.cancelLink());
+  protected cancel(): void {
+    this.cancelled.emit();
   }
   protected readonly model = signal<WorkAreaUpsertPayload>({
     name: '',

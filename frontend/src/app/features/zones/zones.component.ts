@@ -6,23 +6,31 @@ import {
   resource,
   signal,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { HlmAlertDialogImports } from '@spartan-ng/helm/alert-dialog';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
+import { HlmDialogService } from '@spartan-ng/helm/dialog';
 import { HlmTableImports } from '@spartan-ng/helm/table';
 import { HlmTooltipImports } from '@spartan-ng/helm/tooltip';
 import { WorkAreasService } from './zones.service';
+import { WorkAreaDialogContext, ZonesFormPageComponent } from './zones-form-page.component';
 
 @Component({
   selector: 'app-zones',
-  imports: [RouterLink, HlmAlertDialogImports, HlmButtonImports, HlmCardImports, HlmTableImports, HlmTooltipImports],
+  imports: [
+    HlmAlertDialogImports,
+    HlmButtonImports,
+    HlmCardImports,
+    HlmTableImports,
+    HlmTooltipImports,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './zones.component.html',
 })
 export class ZonesComponent {
   private readonly workAreasService = inject(WorkAreasService);
+  private readonly dialog = inject(HlmDialogService);
   private readonly deletingIds = signal<Set<string>>(new Set());
 
   protected readonly workAreasResource = resource({
@@ -45,6 +53,16 @@ export class ZonesComponent {
 
   protected reload(): void {
     void this.workAreasResource.reload();
+  }
+
+  protected openWorkAreaForm(workAreaId?: string): void {
+    this.dialog.open<unknown, WorkAreaDialogContext>(ZonesFormPageComponent, {
+      contentClass: 'max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-3xl',
+      context: {
+        workAreaId,
+        onSaved: () => this.reload(),
+      },
+    });
   }
 
   protected async deleteWorkArea(workAreaId: string): Promise<void> {

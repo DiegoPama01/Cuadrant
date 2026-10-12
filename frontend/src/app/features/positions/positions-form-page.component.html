@@ -1,25 +1,22 @@
-<section class="flex min-w-0 flex-1 flex-col gap-6">
-  <div class="space-y-1">
-    <p class="text-muted-foreground text-sm font-medium uppercase tracking-[0.2em]">Settings</p>
-    <div>
-      <h1 class="text-3xl font-semibold tracking-tight">
-        {{ isEditMode ? 'Edit job role' : 'New job role' }}
-      </h1>
-      <p class="text-muted-foreground text-sm">
-        {{ isEditMode ? 'Update an existing role used in planning assignments.' : 'Create a role your team can be assigned to during planning.' }}
-      </p>
-    </div>
-  </div>
+<hlm-dialog-header>
+  <h2 hlmDialogTitle>{{ isEditMode ? 'Edit job role' : 'New job role' }}</h2>
+  <p hlmDialogDescription>
+    {{
+      isEditMode
+        ? 'Update an existing role used in planning assignments.'
+        : 'Create a role your team can be assigned to during planning.'
+    }}
+  </p>
+</hlm-dialog-header>
 
-  @if (isEditMode && positionResource.isLoading()) {
-    <div class="bg-card rounded-lg border p-6 text-sm">Loading job role details...</div>
-  } @else {
-    <app-positions-form
-      [initialValue]="initialValue()"
-      [submitLabel]="isEditMode ? 'Save changes' : 'Create job role'"
-      [formError]="formError()"
-      [submitForm]="saveJobRole.bind(this)"
-      cancelLink="/settings/job-roles"
-    />
-  }
-</section>
+@if (isEditMode && positionResource.isLoading()) {
+  <div class="py-6 text-sm">Loading job role details...</div>
+} @else {
+  <app-positions-form
+    [initialValue]="initialValue()"
+    [submitLabel]="isEditMode ? 'Save changes' : 'Create job role'"
+    [formError]="formError()"
+    [submitForm]="saveJobRole.bind(this)"
+    (cancelled)="dialogRef.close()"
+  />
+}

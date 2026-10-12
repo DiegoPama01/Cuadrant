@@ -10,37 +10,44 @@
       </div>
     </div>
 
-    <button hlmBtn type="button" routerLink="new">
-      New job role
-    </button>
+    <button hlmBtn type="button" (click)="openJobRoleForm()">New job role</button>
   </div>
 
   @if (jobRolesResource.isLoading()) {
     <hlm-card>
-      <div hlmCardContent class="flex min-h-64 flex-col items-center justify-center gap-3 py-10 text-center">
+      <div
+        hlmCardContent
+        class="flex min-h-64 flex-col items-center justify-center gap-3 py-10 text-center"
+      >
         <div class="bg-muted h-10 w-10 animate-pulse rounded-full"></div>
         <div class="space-y-1">
           <p class="font-medium">Loading job roles</p>
-          <p class="text-muted-foreground text-sm">Fetching job roles for the active installation.</p>
+          <p class="text-muted-foreground text-sm">
+            Fetching job roles for the active installation.
+          </p>
         </div>
       </div>
     </hlm-card>
   } @else if (jobRolesError(); as errorMessage) {
     <hlm-card>
-      <div hlmCardContent class="flex min-h-64 flex-col items-center justify-center gap-4 py-10 text-center">
+      <div
+        hlmCardContent
+        class="flex min-h-64 flex-col items-center justify-center gap-4 py-10 text-center"
+      >
         <div class="space-y-1">
           <p class="font-medium">Job roles are unavailable</p>
           <p class="text-muted-foreground text-sm" aria-live="polite">{{ errorMessage }}</p>
         </div>
 
-        <button hlmBtn type="button" variant="outline" (click)="reload()">
-          Retry
-        </button>
+        <button hlmBtn type="button" variant="outline" (click)="reload()">Retry</button>
       </div>
     </hlm-card>
   } @else if (jobRoles().length === 0) {
     <hlm-card>
-      <div hlmCardContent class="flex min-h-64 flex-col items-center justify-center gap-3 py-10 text-center">
+      <div
+        hlmCardContent
+        class="flex min-h-64 flex-col items-center justify-center gap-3 py-10 text-center"
+      >
         <div class="space-y-1">
           <p class="font-medium">No job roles yet</p>
           <p class="text-muted-foreground text-sm">
@@ -48,20 +55,18 @@
           </p>
         </div>
 
-        <button hlmBtn type="button" routerLink="new">
-          Create first job role
-        </button>
+        <button hlmBtn type="button" (click)="openJobRoleForm()">Create first job role</button>
       </div>
     </hlm-card>
   } @else {
     <div hlmTableContainer class="rounded-lg border bg-card">
-        <table hlmTable class="min-w-[760px]">
+      <table hlmTable class="min-w-[760px]">
         <thead hlmTableHeader>
           <tr hlmTableRow>
             <th hlmTableHead>Name</th>
             <th hlmTableHead>Code</th>
             <th hlmTableHead>Description</th>
-             <th hlmTableHead class="text-right">Actions</th>
+            <th hlmTableHead class="text-right">Actions</th>
           </tr>
         </thead>
         <tbody hlmTableBody>
@@ -69,29 +74,59 @@
             <tr hlmTableRow>
               <td hlmTableCell class="font-medium">
                 <div class="flex items-center gap-2">
-                  <span class="size-3 shrink-0 rounded-full border border-black/10" [style.background-color]="jobRole.color" [hlmTooltip]="jobRole.color || 'No color assigned'" [attr.aria-label]="jobRole.color ? 'Assigned color: ' + jobRole.color : 'No color assigned'"></span>
+                  <span
+                    class="size-3 shrink-0 rounded-full border border-black/10"
+                    [style.background-color]="jobRole.color"
+                    [hlmTooltip]="jobRole.color || 'No color assigned'"
+                    [attr.aria-label]="
+                      jobRole.color ? 'Assigned color: ' + jobRole.color : 'No color assigned'
+                    "
+                  ></span>
                   <span>{{ jobRole.name }}</span>
                 </div>
               </td>
               <td hlmTableCell class="text-muted-foreground">{{ jobRole.code || '—' }}</td>
               <td hlmTableCell class="text-muted-foreground">{{ jobRole.description || '—' }}</td>
-               <td hlmTableCell class="text-right">
+              <td hlmTableCell class="text-right">
                 <div class="flex justify-end gap-2">
-                  <button hlmBtn type="button" variant="outline" size="sm" [routerLink]="[jobRole.id, 'edit']">Edit</button>
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    (click)="openJobRoleForm(jobRole.id)"
+                  >
+                    Edit
+                  </button>
                   <hlm-alert-dialog>
-                    <button hlmAlertDialogTrigger hlmBtn type="button" variant="destructive" size="sm" [disabled]="isDeleting(jobRole.id)">
+                    <button
+                      hlmAlertDialogTrigger
+                      hlmBtn
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      [disabled]="isDeleting(jobRole.id)"
+                    >
                       Delete
                     </button>
                     <hlm-alert-dialog-content *hlmAlertDialogPortal>
                       <hlm-alert-dialog-header>
                         <h2 hlmAlertDialogTitle>Delete job role?</h2>
                         <p hlmAlertDialogDescription>
-                          This will permanently remove <span class="font-medium">{{ jobRole.name }}</span> from the active installation.
+                          This will permanently remove
+                          <span class="font-medium">{{ jobRole.name }}</span> from the active
+                          installation.
                         </p>
                       </hlm-alert-dialog-header>
                       <hlm-alert-dialog-footer>
                         <button hlmAlertDialogCancel type="button">Cancel</button>
-                        <button hlmAlertDialogAction type="button" variant="destructive" [disabled]="isDeleting(jobRole.id)" (click)="deleteJobRole(jobRole.id)">
+                        <button
+                          hlmAlertDialogAction
+                          type="button"
+                          variant="destructive"
+                          [disabled]="isDeleting(jobRole.id)"
+                          (click)="deleteJobRole(jobRole.id)"
+                        >
                           Delete
                         </button>
                       </hlm-alert-dialog-footer>

@@ -6,23 +6,31 @@ import {
   resource,
   signal,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { HlmAlertDialogImports } from '@spartan-ng/helm/alert-dialog';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
+import { HlmDialogService } from '@spartan-ng/helm/dialog';
 import { HlmTableImports } from '@spartan-ng/helm/table';
 import { HlmTooltipImports } from '@spartan-ng/helm/tooltip';
 import { JobRolesService } from '../job-roles/job-roles.service';
+import { JobRoleDialogContext, PositionsFormPageComponent } from './positions-form-page.component';
 
 @Component({
   selector: 'app-positions',
-  imports: [RouterLink, HlmAlertDialogImports, HlmButtonImports, HlmCardImports, HlmTableImports, HlmTooltipImports],
+  imports: [
+    HlmAlertDialogImports,
+    HlmButtonImports,
+    HlmCardImports,
+    HlmTableImports,
+    HlmTooltipImports,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './positions.component.html',
 })
 export class PositionsComponent {
   private readonly jobRolesService = inject(JobRolesService);
+  private readonly dialog = inject(HlmDialogService);
   private readonly deletingIds = signal<Set<string>>(new Set());
 
   protected readonly jobRolesResource = resource({
@@ -45,6 +53,16 @@ export class PositionsComponent {
 
   protected reload(): void {
     void this.jobRolesResource.reload();
+  }
+
+  protected openJobRoleForm(jobRoleId?: string): void {
+    this.dialog.open<unknown, JobRoleDialogContext>(PositionsFormPageComponent, {
+      contentClass: 'max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-3xl',
+      context: {
+        jobRoleId,
+        onSaved: () => this.reload(),
+      },
+    });
   }
 
   protected async deleteJobRole(jobRoleId: string): Promise<void> {

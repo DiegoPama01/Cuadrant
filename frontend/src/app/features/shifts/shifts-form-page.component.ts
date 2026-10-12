@@ -1,24 +1,37 @@
-import { ChangeDetectionStrategy, Component, computed, inject, resource, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  resource,
+  signal,
+} from '@angular/core';
+import { BrnDialogRef, injectBrnDialogContext } from '@spartan-ng/brain/dialog';
+import { HlmDialogImports } from '@spartan-ng/helm/dialog';
 import { firstValueFrom } from 'rxjs';
 import { randomFormColor } from '../../shared/color-utils';
 import { ShiftsFormComponent } from './shifts-form.component';
 import { ShiftTemplateUpsertPayload } from './shifts.model';
 import { ShiftTemplatesService } from '../planning/shift-templates.service';
 
+export interface ShiftTemplateDialogContext {
+  shiftTemplateId?: string;
+  onSaved: () => void;
+}
+
 @Component({
   selector: 'app-shifts-form-page',
-  imports: [ShiftsFormComponent],
+  imports: [HlmDialogImports, ShiftsFormComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './shifts-form-page.component.html',
 })
 export class ShiftsFormPageComponent {
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
+  protected readonly context = injectBrnDialogContext<ShiftTemplateDialogContext>();
+  protected readonly dialogRef = inject(BrnDialogRef);
   private readonly shiftTemplatesService = inject(ShiftTemplatesService);
 
-  private readonly shiftId = this.route.snapshot.paramMap.get('id');
-  protected readonly isEditMode = this.shiftId !== null;
+  private readonly shiftId = this.context.shiftTemplateId;
+  protected readonly isEditMode = !!this.shiftId;
   protected readonly formError = signal<string | null>(null);
 
   protected readonly shiftResource = resource({
@@ -69,10 +82,12 @@ export class ShiftsFormPageComponent {
         await firstValueFrom(this.shiftTemplatesService.create(payload));
       }
 
-      await this.router.navigate(['/settings/shift-templates']);
+      this.context.onSaved();
+      this.dialogRef.close();
     } catch {
-      this.formError.set('We could not save this shift template. Please review the form and try again.');
+      this.formError.set(
+        'We could not save this shift template. Please review the form and try again.',
+      );
     }
   }
-
 }

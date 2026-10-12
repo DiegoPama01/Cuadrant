@@ -1,58 +1,76 @@
-<hlm-card>
-  <div hlmCardContent class="pt-6">
-    <form [formRoot]="zoneForm">
-      <hlm-field-group class="space-y-6">
-        <div class="grid gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
-          <hlm-field>
-            <label hlmFieldLabel for="work-area-name">Name</label>
-            <input hlmInput id="work-area-name" type="text" placeholder="Front desk" [formField]="zoneForm.name" />
-            @for (error of zoneForm.name().errors(); track error) {
-              <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
-            }
-          </hlm-field>
-
-          <hlm-field>
-            <label hlmFieldLabel for="work-area-color">Color</label>
-            <div class="flex items-center gap-3">
-              <input hlmInput id="work-area-color" type="color" class="h-11 w-16 shrink-0 p-1" [formField]="zoneForm.color" />
-              <code class="text-muted-foreground text-sm">{{ zoneForm.color().value() }}</code>
-            </div>
-            @for (error of zoneForm.color().errors(); track error) {
-              <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
-            }
-          </hlm-field>
-        </div>
-
-        <div class="grid gap-6 md:grid-cols-2">
-          <hlm-field>
-            <label hlmFieldLabel for="work-area-code">Code</label>
-            <input hlmInput id="work-area-code" type="text" placeholder="FD" [formField]="zoneForm.code" />
-          </hlm-field>
-
-        </div>
-
-        <hlm-field>
-          <label hlmFieldLabel for="work-area-description">Description</label>
-          <textarea hlmTextarea id="work-area-description" placeholder="Where this work area is located" [formField]="zoneForm.description"></textarea>
-        </hlm-field>
-
-        <div class="flex items-center gap-3 rounded-lg px-4 py-3">
-          <div>
-            <p class="text-sm font-medium">Active work area</p>
-            <p class="text-muted-foreground text-xs">Available for planning assignments</p>
-          </div>
-          <hlm-switch [checked]="model().active" (checkedChange)="updateActive($event)" />
-        </div>
-
-        @if (formError(); as errorMessage) {
-          <p class="text-sm font-medium text-red-600" aria-live="polite">{{ errorMessage }}</p>
+<form [formRoot]="zoneForm">
+  <hlm-field-group class="space-y-6">
+    <div class="grid gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+      <hlm-field>
+        <label hlmFieldLabel for="work-area-name">Name</label>
+        <input
+          hlmInput
+          id="work-area-name"
+          type="text"
+          placeholder="Front desk"
+          [formField]="zoneForm.name"
+        />
+        @for (error of zoneForm.name().errors(); track error) {
+          <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
         }
+      </hlm-field>
 
-        <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <button hlmBtn type="button" variant="outline" (click)="cancel()">Cancel</button>
-          <button hlmBtn type="submit" [disabled]="zoneForm().submitting()">{{ submitLabel() }}</button>
+      <hlm-field>
+        <label hlmFieldLabel for="work-area-color">Color</label>
+        <div class="flex items-center gap-3">
+          <input
+            hlmInput
+            id="work-area-color"
+            type="color"
+            class="h-11 w-16 shrink-0 p-1"
+            [formField]="zoneForm.color"
+          />
+          <code class="text-muted-foreground text-sm">{{ zoneForm.color().value() }}</code>
         </div>
-      </hlm-field-group>
-    </form>
-  </div>
-</hlm-card>
+        @for (error of zoneForm.color().errors(); track error) {
+          <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
+        }
+      </hlm-field>
+    </div>
+
+    <div class="grid gap-6 md:grid-cols-2">
+      <hlm-field>
+        <label hlmFieldLabel for="work-area-code">Code</label>
+        <input
+          hlmInput
+          id="work-area-code"
+          type="text"
+          placeholder="FD"
+          [formField]="zoneForm.code"
+        />
+      </hlm-field>
+    </div>
+
+    <hlm-field>
+      <label hlmFieldLabel for="work-area-description">Description</label>
+      <textarea
+        hlmTextarea
+        id="work-area-description"
+        placeholder="Where this work area is located"
+        [formField]="zoneForm.description"
+      ></textarea>
+    </hlm-field>
+
+    <div class="flex items-center gap-3 rounded-lg px-4 py-3">
+      <div>
+        <p class="text-sm font-medium">Active work area</p>
+        <p class="text-muted-foreground text-xs">Available for planning assignments</p>
+      </div>
+      <hlm-switch [checked]="model().active" (checkedChange)="updateActive($event)" />
+    </div>
+
+    @if (formError(); as errorMessage) {
+      <p class="text-sm font-medium text-red-600" aria-live="polite">{{ errorMessage }}</p>
+    }
+
+    <hlm-dialog-footer>
+      <button hlmBtn type="button" variant="outline" (click)="cancel()">Cancel</button>
+      <button hlmBtn type="submit" [disabled]="zoneForm().submitting()">{{ submitLabel() }}</button>
+    </hlm-dialog-footer>
+  </hlm-field-group>
+</form>

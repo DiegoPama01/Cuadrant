@@ -1,79 +1,98 @@
-<hlm-card>
-  <div hlmCardContent class="pt-6">
-    <form [formRoot]="shiftForm">
-      <hlm-field-group class="space-y-6">
-        <hlm-field>
-          <label hlmFieldLabel for="shift-name">Name</label>
-          <input hlmInput id="shift-name" type="text" placeholder="Morning" [formField]="shiftForm.name" />
-          @for (error of shiftForm.name().errors(); track error) {
-            <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
-          }
-        </hlm-field>
+<form [formRoot]="shiftForm">
+  <hlm-field-group class="space-y-6">
+    <hlm-field>
+      <label hlmFieldLabel for="shift-name">Name</label>
+      <input
+        hlmInput
+        id="shift-name"
+        type="text"
+        placeholder="Morning"
+        [formField]="shiftForm.name"
+      />
+      @for (error of shiftForm.name().errors(); track error) {
+        <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
+      }
+    </hlm-field>
 
-        <div class="grid gap-6 md:grid-cols-2">
-          <hlm-field>
-            <label hlmFieldLabel for="shift-code">Code</label>
-            <input hlmInput id="shift-code" type="text" placeholder="AM" [formField]="shiftForm.code" />
-          </hlm-field>
+    <div class="grid gap-6 md:grid-cols-2">
+      <hlm-field>
+        <label hlmFieldLabel for="shift-code">Code</label>
+        <input hlmInput id="shift-code" type="text" placeholder="AM" [formField]="shiftForm.code" />
+      </hlm-field>
+    </div>
 
-        </div>
+    <hlm-field>
+      <label hlmFieldLabel for="shift-template-description">Description</label>
+      <textarea
+        hlmTextarea
+        id="shift-template-description"
+        placeholder="When this shift template is used"
+        [formField]="shiftForm.description"
+      ></textarea>
+    </hlm-field>
 
-        <hlm-field>
-          <label hlmFieldLabel for="shift-template-description">Description</label>
-          <textarea hlmTextarea id="shift-template-description" placeholder="When this shift template is used" [formField]="shiftForm.description"></textarea>
-        </hlm-field>
-
-        <div class="grid gap-6 md:grid-cols-3">
-          <hlm-field>
-            <label hlmFieldLabel for="shift-start-time">Start time</label>
-             <input hlmInput id="shift-start-time" type="time" [formField]="shiftForm.start_time" />
-            @for (error of shiftForm.start_time().errors(); track error) {
-              <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
-            }
-          </hlm-field>
-
-          <hlm-field>
-            <label hlmFieldLabel for="shift-end-time">End time</label>
-             <input hlmInput id="shift-end-time" type="time" [formField]="shiftForm.end_time" />
-            @for (error of shiftForm.end_time().errors(); track error) {
-              <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
-            }
-          </hlm-field>
-
-          <hlm-field>
-            <label hlmFieldLabel for="shift-break-minutes">Break minutes</label>
-            <input hlmInput id="shift-break-minutes" type="number" [formField]="shiftForm.break_minutes" />
-          </hlm-field>
-        </div>
-
-        <hlm-field>
-          <label hlmFieldLabel for="shift-color">Color</label>
-          <div class="flex items-center gap-3">
-            <input hlmInput id="shift-color" type="color" class="h-11 w-16 shrink-0 p-1" [formField]="shiftForm.color" />
-            <code class="text-muted-foreground text-sm">{{ shiftForm.color().value() }}</code>
-          </div>
-          @for (error of shiftForm.color().errors(); track error) {
-            <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
-          }
-        </hlm-field>
-
-        <div class="flex items-center gap-3 rounded-lg px-4 py-3">
-          <div>
-            <p class="text-sm font-medium">Active shift template</p>
-            <p class="text-muted-foreground text-xs">Available for planning</p>
-          </div>
-          <hlm-switch [checked]="model().active" (checkedChange)="updateActive($event)" />
-        </div>
-
-        @if (formError(); as errorMessage) {
-          <p class="text-sm font-medium text-red-600" aria-live="polite">{{ errorMessage }}</p>
+    <div class="grid gap-6 md:grid-cols-3">
+      <hlm-field>
+        <label hlmFieldLabel for="shift-start-time">Start time</label>
+        <input hlmInput id="shift-start-time" type="time" [formField]="shiftForm.start_time" />
+        @for (error of shiftForm.start_time().errors(); track error) {
+          <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
         }
+      </hlm-field>
 
-        <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <button hlmBtn type="button" variant="outline" (click)="cancel()">Cancel</button>
-          <button hlmBtn type="submit" [disabled]="shiftForm().submitting()">{{ submitLabel() }}</button>
-        </div>
-      </hlm-field-group>
-    </form>
-  </div>
-</hlm-card>
+      <hlm-field>
+        <label hlmFieldLabel for="shift-end-time">End time</label>
+        <input hlmInput id="shift-end-time" type="time" [formField]="shiftForm.end_time" />
+        @for (error of shiftForm.end_time().errors(); track error) {
+          <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
+        }
+      </hlm-field>
+
+      <hlm-field>
+        <label hlmFieldLabel for="shift-break-minutes">Break minutes</label>
+        <input
+          hlmInput
+          id="shift-break-minutes"
+          type="number"
+          [formField]="shiftForm.break_minutes"
+        />
+      </hlm-field>
+    </div>
+
+    <hlm-field>
+      <label hlmFieldLabel for="shift-color">Color</label>
+      <div class="flex items-center gap-3">
+        <input
+          hlmInput
+          id="shift-color"
+          type="color"
+          class="h-11 w-16 shrink-0 p-1"
+          [formField]="shiftForm.color"
+        />
+        <code class="text-muted-foreground text-sm">{{ shiftForm.color().value() }}</code>
+      </div>
+      @for (error of shiftForm.color().errors(); track error) {
+        <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    <div class="flex items-center gap-3 rounded-lg px-4 py-3">
+      <div>
+        <p class="text-sm font-medium">Active shift template</p>
+        <p class="text-muted-foreground text-xs">Available for planning</p>
+      </div>
+      <hlm-switch [checked]="model().active" (checkedChange)="updateActive($event)" />
+    </div>
+
+    @if (formError(); as errorMessage) {
+      <p class="text-sm font-medium text-red-600" aria-live="polite">{{ errorMessage }}</p>
+    }
+
+    <hlm-dialog-footer>
+      <button hlmBtn type="button" variant="outline" (click)="cancel()">Cancel</button>
+      <button hlmBtn type="submit" [disabled]="shiftForm().submitting()">
+        {{ submitLabel() }}
+      </button>
+    </hlm-dialog-footer>
+  </hlm-field-group>
+</form>
