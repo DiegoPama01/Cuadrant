@@ -1,18 +1,20 @@
 <section class="flex min-w-0 flex-1 flex-col gap-4">
-  <div class="grid gap-2 rounded-xl bg-card p-2 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
-    <div class="flex items-center">
-      <hlm-toggle-group type="single" variant="outline" value="employees" [nullable]="false" aria-label="Schedule grouping">
-        <button hlmToggleGroupItem value="employees">Employees</button>
+  <div class="grid gap-3 rounded-xl bg-card p-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+    <div class="flex flex-wrap items-center gap-3">
+      <hlm-toggle-group type="single" variant="outline" value="week" [nullable]="false" aria-label="Planning period">
+        <button hlmToggleGroupItem value="day" disabled>Day</button>
+        <button hlmToggleGroupItem value="week">Week</button>
+        <button hlmToggleGroupItem value="month" disabled>Month</button>
       </hlm-toggle-group>
+      <div class="flex items-center gap-2">
+        <button hlmBtn variant="outline" size="icon" aria-label="Previous week" (click)="previousWeek()"><ng-icon name="lucideChevronLeft" /></button>
+        <hlm-date-picker [date]="weekStart()" (dateChange)="updateDate($event)">
+          <hlm-date-picker-trigger buttonId="planning-week-date" class="min-w-52 justify-center">{{ weekRangeLabel() }}</hlm-date-picker-trigger>
+        </hlm-date-picker>
+        <button hlmBtn variant="outline" size="icon" aria-label="Next week" (click)="nextWeek()"><ng-icon name="lucideChevronRight" /></button>
+      </div>
     </div>
-    <div class="flex items-center justify-center gap-2">
-      <button hlmBtn variant="outline" size="icon" aria-label="Previous week" (click)="previousWeek()"><ng-icon name="lucideChevronLeft" /></button>
-      <hlm-date-picker [date]="weekStart()" (dateChange)="updateDate($event)">
-        <hlm-date-picker-trigger buttonId="planning-week-date" class="min-w-52 justify-center">{{ weekRangeLabel() }}</hlm-date-picker-trigger>
-      </hlm-date-picker>
-      <button hlmBtn variant="outline" size="icon" aria-label="Next week" (click)="nextWeek()"><ng-icon name="lucideChevronRight" /></button>
-    </div>
-    <div class="flex flex-wrap items-center justify-start gap-2 lg:justify-end">
+    <div class="flex flex-wrap items-center justify-end gap-2">
       <input hlmInput class="min-w-48 flex-1 sm:max-w-64" type="search" placeholder="Search employees…" aria-label="Search employees" [value]="employeeSearch()" (input)="updateEmployeeSearch($event)" />
       <button hlmBtn variant="outline" [disabled]="entries().length === 0" (click)="exportCsv()"><ng-icon name="lucideDownload" />Export CSV</button>
       <button hlmBtn variant="outline" size="icon" aria-label="Refresh schedule" (click)="reload()"><ng-icon name="lucideRefreshCw" /></button>
