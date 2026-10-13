@@ -12,9 +12,9 @@ class CompanyAdmin(admin.ModelAdmin):
 
 @admin.register(Installation)
 class InstallationAdmin(admin.ModelAdmin):
-    list_display = ("name", "company", "code", "timezone", "active", "created_at", "updated_at")
+    list_display = ("name", "company", "timezone", "active", "created_at", "updated_at")
     list_filter = ("company", "active")
-    search_fields = ("name", "code", "address", "company__name")
+    search_fields = ("name", "address", "company__name")
 
 
 @admin.register(CompanyMembership)

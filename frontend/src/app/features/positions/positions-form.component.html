@@ -1,64 +1,63 @@
-<hlm-card>
-  <div hlmCardContent class="pt-6">
-    <form [formRoot]="positionForm">
-      <hlm-field-group class="space-y-6">
-        <hlm-field>
-          <label hlmFieldLabel for="position-name">Name</label>
-          <input hlmInput id="position-name" type="text" placeholder="Cashier" [formField]="positionForm.name" />
-          @for (error of positionForm.name().errors(); track error) {
-            <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
-          }
-        </hlm-field>
+<form [formRoot]="positionForm">
+  <hlm-field-group class="space-y-6">
+    <hlm-field>
+      <label hlmFieldLabel for="job-role-name">Name</label>
+      <input
+        hlmInput
+        id="job-role-name"
+        type="text"
+        placeholder="Cashier"
+        [formField]="positionForm.name"
+      />
+      @for (error of positionForm.name().errors(); track error) {
+        <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
+      }
+    </hlm-field>
 
-        <div class="grid gap-6 md:grid-cols-2">
-          <hlm-field>
-            <label hlmFieldLabel for="position-code">Code</label>
-            <input hlmInput id="position-code" type="text" placeholder="FD" [formField]="positionForm.code" />
-          </hlm-field>
+    <hlm-field>
+      <label hlmFieldLabel for="job-role-description">Description</label>
+      <textarea
+        hlmTextarea
+        id="job-role-description"
+        placeholder="What this role does"
+        [formField]="positionForm.description"
+      ></textarea>
+    </hlm-field>
 
-          <hlm-field>
-            <label hlmFieldLabel for="position-sort-order">Sort order</label>
-            <input hlmInput id="position-sort-order" type="number" [formField]="positionForm.sort_order" />
-          </hlm-field>
-        </div>
+    <hlm-field>
+      <label hlmFieldLabel for="job-role-color">Color</label>
+      <div class="flex items-center gap-3">
+        <input
+          hlmInput
+          id="job-role-color"
+          type="color"
+          class="h-11 w-16 shrink-0 p-1"
+          [formField]="positionForm.color"
+        />
+        <code class="text-muted-foreground text-sm">{{ positionForm.color().value() }}</code>
+      </div>
+      @for (error of positionForm.color().errors(); track error) {
+        <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
+      }
+    </hlm-field>
 
-        <hlm-field>
-          <label hlmFieldLabel for="position-description">Description</label>
-          <textarea hlmTextarea id="position-description" placeholder="What this role does" [formField]="positionForm.description"></textarea>
-        </hlm-field>
+    <div class="flex items-center gap-3 rounded-lg px-4 py-3">
+      <div>
+        <p class="text-sm font-medium">Active job role</p>
+        <p class="text-muted-foreground text-xs">Available for employees and planning rules</p>
+      </div>
+      <hlm-switch [checked]="model().active" (checkedChange)="updateActive($event)" />
+    </div>
 
-        <hlm-field>
-          <label hlmFieldLabel for="position-color">Color</label>
-          <div class="flex items-center gap-3">
-            <input hlmInput id="position-color" type="color" class="h-11 w-16 shrink-0 p-1" [formField]="positionForm.color" />
-            <code class="text-muted-foreground text-sm">{{ positionForm.color().value() }}</code>
-          </div>
-          @for (error of positionForm.color().errors(); track error) {
-            <hlm-field-error [validator]="error.kind">{{ error.message }}</hlm-field-error>
-          }
-        </hlm-field>
+    @if (formError(); as errorMessage) {
+      <p class="text-sm font-medium text-red-600" aria-live="polite">{{ errorMessage }}</p>
+    }
 
-        <div class="flex items-center gap-3 rounded-lg px-4 py-3">
-          <div>
-            <p class="text-sm font-medium">Active position</p>
-            <p class="text-muted-foreground text-xs">Available for employees and planning rules</p>
-          </div>
-          <hlm-switch [checked]="model().active" (checkedChange)="updateActive($event)" />
-        </div>
-
-        @if (formError(); as errorMessage) {
-          <p class="text-sm font-medium text-red-600" aria-live="polite">{{ errorMessage }}</p>
-        }
-
-        <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <button hlmBtn type="button" variant="outline" (click)="cancel()">
-            Cancel
-          </button>
-          <button hlmBtn type="submit" [disabled]="positionForm().submitting()">
-            {{ submitLabel() }}
-          </button>
-        </div>
-      </hlm-field-group>
-    </form>
-  </div>
-</hlm-card>
+    <hlm-dialog-footer>
+      <button hlmBtn type="button" variant="outline" (click)="cancel()">Cancel</button>
+      <button hlmBtn type="submit" [disabled]="positionForm().submitting()">
+        {{ submitLabel() }}
+      </button>
+    </hlm-dialog-footer>
+  </hlm-field-group>
+</form>

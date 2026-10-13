@@ -88,138 +88,34 @@ export const routes: Routes = [
             data: {
               breadcrumb: 'Installations',
             },
-            children: [
-              {
-                path: '',
-                pathMatch: 'full',
-                loadComponent: () =>
-                  import('./features/company/installations.component').then(
-                    (m) => m.InstallationsComponent,
-                  ),
-              },
-              {
-                path: 'new',
-                data: {
-                  breadcrumb: 'New',
-                },
-                loadComponent: () =>
-                  import('./features/company/installation-form-page.component').then(
-                    (m) => m.InstallationFormPageComponent,
-                  ),
-              },
-              {
-                path: ':id/edit',
-                data: {
-                  breadcrumb: 'Edit',
-                },
-                loadComponent: () =>
-                  import('./features/company/installation-form-page.component').then(
-                    (m) => m.InstallationFormPageComponent,
-                  ),
-              },
-            ],
+            loadComponent: () =>
+              import('./features/company/installations.component').then(
+                (m) => m.InstallationsComponent,
+              ),
           },
           {
-            path: 'positions',
+            path: 'job-roles',
             data: {
-              breadcrumb: 'Positions',
+              breadcrumb: 'Job roles',
             },
-            children: [
-              {
-                path: '',
-                pathMatch: 'full',
-                loadComponent: () =>
-                  import('./features/positions/positions.component').then((m) => m.PositionsComponent),
-              },
-              {
-                path: 'new',
-                data: {
-                  breadcrumb: 'New',
-                },
-                loadComponent: () =>
-                  import('./features/positions/positions-form-page.component').then(
-                    (m) => m.PositionsFormPageComponent,
-                  ),
-              },
-              {
-                path: ':id/edit',
-                data: {
-                  breadcrumb: 'Edit',
-                },
-                loadComponent: () =>
-                  import('./features/positions/positions-form-page.component').then(
-                    (m) => m.PositionsFormPageComponent,
-                  ),
-              },
-            ],
+            loadComponent: () =>
+              import('./features/positions/positions.component').then((m) => m.PositionsComponent),
           },
           {
-            path: 'zones',
+            path: 'work-areas',
             data: {
-              breadcrumb: 'Zones',
+              breadcrumb: 'Work areas',
             },
-            children: [
-              {
-                path: '',
-                pathMatch: 'full',
-                loadComponent: () =>
-                  import('./features/zones/zones.component').then((m) => m.ZonesComponent),
-              },
-              {
-                path: 'new',
-                data: {
-                  breadcrumb: 'New',
-                },
-                loadComponent: () =>
-                  import('./features/zones/zones-form-page.component').then(
-                    (m) => m.ZonesFormPageComponent,
-                  ),
-              },
-              {
-                path: ':id/edit',
-                data: {
-                  breadcrumb: 'Edit',
-                },
-                loadComponent: () =>
-                  import('./features/zones/zones-form-page.component').then(
-                    (m) => m.ZonesFormPageComponent,
-                  ),
-              },
-            ],
+            loadComponent: () =>
+              import('./features/zones/zones.component').then((m) => m.ZonesComponent),
           },
           {
-            path: 'shifts',
+            path: 'shift-templates',
             data: {
-              breadcrumb: 'Shifts',
+              breadcrumb: 'Shift templates',
             },
-            children: [
-              {
-                path: '',
-                pathMatch: 'full',
-                loadComponent: () =>
-                  import('./features/shifts/shifts.component').then((m) => m.ShiftsComponent),
-              },
-              {
-                path: 'new',
-                data: {
-                  breadcrumb: 'New',
-                },
-                loadComponent: () =>
-                  import('./features/shifts/shifts-form-page.component').then(
-                    (m) => m.ShiftsFormPageComponent,
-                  ),
-              },
-              {
-                path: ':id/edit',
-                data: {
-                  breadcrumb: 'Edit',
-                },
-                loadComponent: () =>
-                  import('./features/shifts/shifts-form-page.component').then(
-                    (m) => m.ShiftsFormPageComponent,
-                  ),
-              },
-            ],
+            loadComponent: () =>
+              import('./features/shifts/shifts.component').then((m) => m.ShiftsComponent),
           },
         ],
       },

@@ -4,14 +4,12 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
 from authorization import fga
 from authorization.permissions import can_create_installation, can_manage_company, can_manage_installation
 from organizations.bootstrap import _build_unique_slug
 from organizations.models import Company, Installation
-from organizations.serializers import CompanySerializer, InstallationSerializer, ShiftSerializer, ZoneSerializer
+from organizations.serializers import CompanySerializer, InstallationSerializer
 from organizations.models import CompanyMembership
-from workforce.models import Shift, Zone
 
 
 class InstallationCreateView(APIView):
@@ -29,7 +27,6 @@ class InstallationCreateView(APIView):
             installation = Installation.objects.create(
                 company=company,
                 name=serializer.validated_data["name"],
-                code=serializer.validated_data.get("code"),
                 address=serializer.validated_data.get("address"),
                 timezone=serializer.validated_data.get("timezone"),
                 active=serializer.validated_data.get("active", True),
@@ -75,7 +72,6 @@ class CompanyViewSet(viewsets.ModelViewSet):
             installation = Installation.objects.create(
                 company=company,
                 name=initial_installation.get("name") or company.name,
-                code=initial_installation.get("code"),
                 address=initial_installation.get("address"),
                 timezone=initial_installation.get("timezone") or company.timezone,
                 active=initial_installation.get("active", True),
@@ -94,7 +90,6 @@ class CompanyViewSet(viewsets.ModelViewSet):
         if not can_manage_company(self.request.user, instance):
             raise PermissionDenied("You do not have permission to manage this company.")
         instance.delete()
-
 
 class CompanyInstallationViewSet(viewsets.ModelViewSet):
     serializer_class = InstallationSerializer
@@ -136,78 +131,3 @@ class CompanyInstallationViewSet(viewsets.ModelViewSet):
         if not can_manage_installation(self.request.user, instance):
             raise PermissionDenied("You do not have permission to manage this installation.")
         instance.delete()
-
-
-def get_default_installation(company):
-    return company.installations.order_by("created_at").first() or Installation.objects.create(
-        company=company,
-        name=company.name,
-        timezone=company.timezone,
-        active=company.active,
-    )
-
-
-class ZoneViewSet(viewsets.ModelViewSet):
-    serializer_class = ZoneSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_company(self):
-        return get_object_or_404(
-            Company,
-            id=self.kwargs["company_id"],
-            memberships__user=self.request.user,
-        )
-
-    def get_queryset(self):
-        return Zone.objects.filter(
-            installation__company=self.get_company(),
-        ).select_related("installation", "installation__company").order_by("sort_order", "name")
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context["company"] = self.get_company()
-        return context
-
-    def perform_create(self, serializer):
-        company = self.get_company()
-        zone = serializer.save(
-            installation=serializer.validated_data.get("installation") or get_default_installation(company),
-        )
-        fga.provision_installation_resource(
-            resource_type="zone",
-            resource_id=zone.id,
-            installation_id=zone.installation_id,
-        )
-
-
-class ShiftViewSet(viewsets.ModelViewSet):
-    serializer_class = ShiftSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_company(self):
-        return get_object_or_404(
-            Company,
-            id=self.kwargs["company_id"],
-            memberships__user=self.request.user,
-        )
-
-    def get_queryset(self):
-        return Shift.objects.filter(
-            installation__company=self.get_company(),
-        ).select_related("installation", "installation__company").order_by("sort_order", "start_time", "name")
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context["company"] = self.get_company()
-        return context
-
-    def perform_create(self, serializer):
-        company = self.get_company()
-        shift = serializer.save(
-            installation=serializer.validated_data.get("installation") or get_default_installation(company),
-        )
-        fga.provision_installation_resource(
-            resource_type="shift",
-            resource_id=shift.id,
-            installation_id=shift.installation_id,
-        )

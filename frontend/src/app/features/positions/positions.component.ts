@@ -6,33 +6,41 @@ import {
   resource,
   signal,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { HlmAlertDialogImports } from '@spartan-ng/helm/alert-dialog';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
+import { HlmDialogService } from '@spartan-ng/helm/dialog';
 import { HlmTableImports } from '@spartan-ng/helm/table';
 import { HlmTooltipImports } from '@spartan-ng/helm/tooltip';
-import { PositionsService } from './positions.service';
+import { JobRolesService } from '../job-roles/job-roles.service';
+import { JobRoleDialogContext, PositionsFormPageComponent } from './positions-form-page.component';
 
 @Component({
   selector: 'app-positions',
-  imports: [RouterLink, HlmAlertDialogImports, HlmButtonImports, HlmCardImports, HlmTableImports, HlmTooltipImports],
+  imports: [
+    HlmAlertDialogImports,
+    HlmButtonImports,
+    HlmCardImports,
+    HlmTableImports,
+    HlmTooltipImports,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './positions.component.html',
 })
 export class PositionsComponent {
-  private readonly positionsService = inject(PositionsService);
+  private readonly jobRolesService = inject(JobRolesService);
+  private readonly dialog = inject(HlmDialogService);
   private readonly deletingIds = signal<Set<string>>(new Set());
 
-  protected readonly positionsResource = resource({
-    loader: async () => firstValueFrom(this.positionsService.list()),
+  protected readonly jobRolesResource = resource({
+    loader: async () => firstValueFrom(this.jobRolesService.list()),
   });
 
-  protected readonly positions = computed(() => this.positionsResource.value() ?? []);
+  protected readonly jobRoles = computed(() => this.jobRolesResource.value() ?? []);
   protected readonly isDeleting = (positionId: string) => this.deletingIds().has(positionId);
-  protected readonly positionsError = computed(() => {
-    const error = this.positionsResource.error();
+  protected readonly jobRolesError = computed(() => {
+    const error = this.jobRolesResource.error();
 
     if (!error) {
       return null;
@@ -40,23 +48,33 @@ export class PositionsComponent {
 
     return error instanceof Error
       ? error.message
-      : 'We could not load positions right now. Please try again.';
+      : 'We could not load job roles right now. Please try again.';
   });
 
   protected reload(): void {
-    void this.positionsResource.reload();
+    void this.jobRolesResource.reload();
   }
 
-  protected async deletePosition(positionId: string, positionName: string): Promise<void> {
-    this.deletingIds.update((ids) => new Set(ids).add(positionId));
+  protected openJobRoleForm(jobRoleId?: string): void {
+    this.dialog.open<unknown, JobRoleDialogContext>(PositionsFormPageComponent, {
+      contentClass: 'w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-4xl',
+      context: {
+        jobRoleId,
+        onSaved: () => this.reload(),
+      },
+    });
+  }
+
+  protected async deleteJobRole(jobRoleId: string): Promise<void> {
+    this.deletingIds.update((ids) => new Set(ids).add(jobRoleId));
 
     try {
-      await firstValueFrom(this.positionsService.delete(positionId));
-      await this.positionsResource.reload();
+      await firstValueFrom(this.jobRolesService.delete(jobRoleId));
+      await this.jobRolesResource.reload();
     } finally {
       this.deletingIds.update((ids) => {
         const next = new Set(ids);
-        next.delete(positionId);
+        next.delete(jobRoleId);
         return next;
       });
     }

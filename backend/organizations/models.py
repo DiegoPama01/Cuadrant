@@ -35,7 +35,6 @@ class Installation(models.Model):
         related_name="installations",
     )
     name = models.CharField(max_length=150)
-    code = models.CharField(max_length=50, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
     timezone = models.CharField(max_length=64, blank=True, null=True)
     active = models.BooleanField(default=True)

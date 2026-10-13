@@ -14,7 +14,7 @@ import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { HlmTableImports } from '@spartan-ng/helm/table';
 import { HlmTooltipImports } from '@spartan-ng/helm/tooltip';
-import { PositionsService } from '../positions/positions.service';
+import { JobRolesService } from '../job-roles/job-roles.service';
 import { Employee } from './employees.model';
 import { EmployeesService } from './employees.service';
 
@@ -25,7 +25,7 @@ interface EmployeeRow {
   fullName: string;
   color: string | null;
   active: boolean;
-  positionName: string;
+  jobRoleName: string;
 }
 
 @Component({
@@ -36,7 +36,7 @@ interface EmployeeRow {
 })
 export class EmployeesComponent {
   private readonly employeesService = inject(EmployeesService);
-  private readonly positionsService = inject(PositionsService);
+  private readonly jobRolesService = inject(JobRolesService);
   private readonly deletingIds = signal<Set<string>>(new Set());
 
   protected readonly employeesResource = resource({
@@ -44,7 +44,7 @@ export class EmployeesComponent {
       firstValueFrom(
         forkJoin({
           employees: this.employeesService.list(),
-          positions: this.positionsService.list(),
+          jobRoles: this.jobRolesService.list(),
         }),
       ),
   });
@@ -56,10 +56,10 @@ export class EmployeesComponent {
       return [];
     }
 
-    const positionsById = new Map(data.positions.map((position) => [position.id, position.name]));
+    const jobRolesById = new Map(data.jobRoles.map((jobRole) => [jobRole.id, jobRole.name]));
 
     return data.employees.map((employee) =>
-      this.mapEmployeeRow(employee, positionsById),
+      this.mapEmployeeRow(employee, jobRolesById),
     );
   });
   protected readonly isDeleting = (employeeId: string) => this.deletingIds().has(employeeId);
@@ -97,7 +97,7 @@ export class EmployeesComponent {
 
   private mapEmployeeRow(
     employee: Employee,
-    positionsById: Map<string, string>,
+    jobRolesById: Map<string, string>,
   ): EmployeeRow {
     const firstName = employee.first_name.trim();
     const lastName = employee.last_name.trim();
@@ -110,7 +110,9 @@ export class EmployeesComponent {
       fullName: fullName || 'Unnamed employee',
       color: employee.color ?? null,
       active: employee.active,
-      positionName: positionsById.get(employee.position) ?? 'Unknown position',
+      jobRoleName: jobRolesById.get(
+        employee.job_roles.find((jobRole) => jobRole.primary)?.job_role ?? employee.job_roles[0]?.job_role,
+      ) ?? 'Sin puesto asignado',
     };
   }
 }

@@ -2,7 +2,6 @@ export interface InstallationSummary {
   id: string;
   company?: string;
   name: string;
-  code?: string | null;
   address?: string | null;
   timezone?: string | null;
   active?: boolean;
@@ -12,7 +11,6 @@ export interface InstallationSummary {
 
 export interface InstallationUpsertPayload {
   name: string;
-  code?: string | null;
   address?: string | null;
   timezone?: string | null;
   active?: boolean;

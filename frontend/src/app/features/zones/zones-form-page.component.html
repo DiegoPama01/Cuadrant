@@ -1,27 +1,22 @@
-<section class="flex min-w-0 flex-1 flex-col gap-6">
-  <div class="space-y-1">
-    <p class="text-muted-foreground text-sm font-medium uppercase tracking-[0.2em]">Settings</p>
-    <div>
-      <h1 class="text-3xl font-semibold tracking-tight">{{ isEditMode ? 'Edit zone' : 'New zone' }}</h1>
-      <p class="text-muted-foreground text-sm">
-        {{ isEditMode ? 'Update an existing work area used in planning assignments.' : 'Create a work area where employees can be assigned.' }}
-      </p>
-    </div>
-  </div>
+<hlm-dialog-header class="mb-6">
+  <h2 hlmDialogTitle>{{ isEditMode ? 'Edit work area' : 'New work area' }}</h2>
+  <p hlmDialogDescription>
+    {{
+      isEditMode
+        ? 'Update an existing work area used in planning assignments.'
+        : 'Create a work area where employees can be assigned.'
+    }}
+  </p>
+</hlm-dialog-header>
 
-  @if (isEditMode && zoneResource.isLoading()) {
-    <div class="bg-card rounded-lg border p-6 text-sm">Loading zone details...</div>
-  } @else {
-    <app-zones-form
-      [initialValue]="initialValue()"
-      [submitLabel]="isEditMode ? 'Save changes' : 'Create zone'"
-      [formError]="formError()"
-      [submitForm]="saveZone.bind(this)"
-      cancelLink="/settings/zones"
-      [shifts]="shifts()"
-      [positions]="positions()"
-      [createShift]="createShift.bind(this)"
-      [createPosition]="createPosition.bind(this)"
-    />
-  }
-</section>
+@if (isEditMode && workAreaResource.isLoading()) {
+  <div class="py-6 text-sm">Loading work area details...</div>
+} @else {
+  <app-zones-form
+    [initialValue]="initialValue()"
+    [submitLabel]="isEditMode ? 'Save changes' : 'Create work area'"
+    [formError]="formError()"
+    [submitForm]="saveWorkArea.bind(this)"
+    (cancelled)="dialogRef.close()"
+  />
+}

@@ -23,7 +23,7 @@ export const data = {
     },
     {
       title: 'Settings',
-      url: '/settings/positions',
+       url: '/settings/job-roles',
       icon: 'lucideSettings2',
       items: [
         {
@@ -31,16 +31,16 @@ export const data = {
           url: '/settings/installations',
         },
         {
-          title: 'Positions',
-          url: '/settings/positions',
+           title: 'Job roles',
+           url: '/settings/job-roles',
         },
         {
-          title: 'Zones',
-          url: '/settings/zones',
+           title: 'Work areas',
+           url: '/settings/work-areas',
         },
         {
-          title: 'Shifts',
-          url: '/settings/shifts',
+           title: 'Shift templates',
+           url: '/settings/shift-templates',
         },
       ],
     },

@@ -1,99 +1,83 @@
-import { ChangeDetectionStrategy, Component, computed, inject, resource, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  resource,
+  signal,
+} from '@angular/core';
+import { BrnDialogRef, injectBrnDialogContext } from '@spartan-ng/brain/dialog';
+import { HlmDialogImports } from '@spartan-ng/helm/dialog';
 import { firstValueFrom } from 'rxjs';
 import { randomFormColor } from '../../shared/color-utils';
-import { CompanyService } from '../../core/company/company.service';
 import { ZonesFormComponent } from './zones-form.component';
-import { ZoneUpsertPayload } from './zones.model';
-import { ZonesService } from './zones.service';
-import { ShiftsService } from '../shifts/shifts.service';
-import { Shift } from '../shifts/shifts.model';
-import { ShiftUpsertPayload } from '../shifts/shifts.model';
-import { PositionsService } from '../positions/positions.service';
-import { Position, PositionUpsertPayload } from '../positions/positions.model';
+import { WorkAreaUpsertPayload } from './zones.model';
+import { WorkAreasService } from './zones.service';
+
+export interface WorkAreaDialogContext {
+  workAreaId?: string;
+  onSaved: () => void;
+}
 
 @Component({
   selector: 'app-zones-form-page',
-  imports: [ZonesFormComponent],
+  imports: [HlmDialogImports, ZonesFormComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './zones-form-page.component.html',
 })
 export class ZonesFormPageComponent {
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  private readonly zonesService = inject(ZonesService);
-  private readonly companyService = inject(CompanyService);
-  private readonly shiftsService = inject(ShiftsService);
-  private readonly positionsService = inject(PositionsService);
-  protected readonly shiftsResource = resource({ loader: async () => firstValueFrom(this.shiftsService.list()) });
-  protected readonly shifts = computed<Shift[]>(() => this.shiftsResource.value() ?? []);
-  protected readonly positionsResource = resource({ loader: async () => firstValueFrom(this.positionsService.list()) });
-  protected readonly positions = computed<Position[]>(() => this.positionsResource.value() ?? []);
+  protected readonly context = injectBrnDialogContext<WorkAreaDialogContext>();
+  protected readonly dialogRef = inject(BrnDialogRef);
+  private readonly workAreasService = inject(WorkAreasService);
 
-  private readonly zoneId = this.route.snapshot.paramMap.get('id');
-  protected readonly isEditMode = this.zoneId !== null;
+  private readonly zoneId = this.context.workAreaId;
+  protected readonly isEditMode = !!this.zoneId;
   protected readonly formError = signal<string | null>(null);
 
-  protected readonly zoneResource = resource({
+  protected readonly workAreaResource = resource({
     loader: async () => {
       if (!this.zoneId) {
         return null;
       }
 
-      return firstValueFrom(this.zonesService.get(this.zoneId));
+      return firstValueFrom(this.workAreasService.get(this.zoneId));
     },
   });
 
-  protected readonly initialValue = computed<ZoneUpsertPayload>(() => {
-    const zone = this.zoneResource.value();
+  protected readonly initialValue = computed<WorkAreaUpsertPayload>(() => {
+    const workArea = this.workAreaResource.value();
 
-    if (!zone) {
+    if (!workArea) {
       return {
         name: '',
-        installation: this.companyService.getActiveInstallationId() ?? undefined,
-        code: '',
         description: '',
         color: randomFormColor(),
-        sort_order: 0,
         active: true,
-        staff_requirements: [],
       };
     }
 
     return {
-      installation: zone.installation ?? undefined,
-      name: zone.name,
-      code: zone.code ?? '',
-      description: zone.description ?? '',
-      color: zone.color,
-      sort_order: zone.sort_order ?? 0,
-      active: zone.active ?? true,
-      staff_requirements: zone.staff_requirements ?? [],
+      name: workArea.name,
+      description: workArea.description ?? '',
+      color: workArea.color,
+      active: workArea.active,
     };
   });
 
-  protected async saveZone(payload: ZoneUpsertPayload): Promise<void> {
+  protected async saveWorkArea(payload: WorkAreaUpsertPayload): Promise<void> {
     this.formError.set(null);
 
     try {
       if (this.zoneId) {
-        await firstValueFrom(this.zonesService.update(this.zoneId, payload));
+        await firstValueFrom(this.workAreasService.update(this.zoneId, payload));
       } else {
-        await firstValueFrom(this.zonesService.create(payload));
+        await firstValueFrom(this.workAreasService.create(payload));
       }
 
-      await this.router.navigate(['/settings/zones']);
+      this.context.onSaved();
+      this.dialogRef.close();
     } catch {
-      this.formError.set('We could not save this zone. Please review the form and try again.');
+      this.formError.set('We could not save this work area. Please review the form and try again.');
     }
   }
-
-  protected async createShift(payload: ShiftUpsertPayload): Promise<Shift> {
-    return firstValueFrom(this.shiftsService.create(payload));
-  }
-
-  protected async createPosition(payload: PositionUpsertPayload): Promise<Position> {
-    return firstValueFrom(this.positionsService.create(payload));
-  }
-
 }

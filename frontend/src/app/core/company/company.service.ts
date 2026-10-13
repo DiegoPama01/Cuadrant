@@ -83,6 +83,20 @@ export class CompanyService {
     return `${this.buildCompanyApiUrl(resourcePath)}${resourceId}/`;
   }
 
+  buildInstallationApiUrl(resourcePath: string, installationId = this.getActiveInstallationId()): string {
+    if (!installationId) {
+      throw new Error('An active installation is required to access installation-scoped resources.');
+    }
+
+    const normalizedResourcePath = resourcePath.replace(/^\/+|\/+$/g, '');
+
+    return `${this.apiBaseUrl}/companies/${this.getRequiredCompanyId()}/installations/${installationId}/${normalizedResourcePath}/`;
+  }
+
+  buildInstallationResourceUrl(resourcePath: string, resourceId: string, installationId = this.getActiveInstallationId()): string {
+    return `${this.buildInstallationApiUrl(resourcePath, installationId)}${resourceId}/`;
+  }
+
   private invalidateCompanies(): void {
     this.listCache.clear();
     this.resourceCache.clear();

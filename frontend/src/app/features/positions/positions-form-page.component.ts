@@ -1,27 +1,38 @@
-import { ChangeDetectionStrategy, Component, computed, inject, resource, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  resource,
+  signal,
+} from '@angular/core';
+import { BrnDialogRef, injectBrnDialogContext } from '@spartan-ng/brain/dialog';
 import { firstValueFrom } from 'rxjs';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
+import { HlmDialogImports } from '@spartan-ng/helm/dialog';
 import { randomFormColor } from '../../shared/color-utils';
-import { CompanyService } from '../../core/company/company.service';
 import { PositionsFormComponent } from './positions-form.component';
-import { PositionUpsertPayload } from './positions.model';
-import { PositionsService } from './positions.service';
+import { JobRoleUpsertPayload } from '../job-roles/job-roles.model';
+import { JobRolesService } from '../job-roles/job-roles.service';
+
+export interface JobRoleDialogContext {
+  jobRoleId?: string;
+  onSaved: () => void;
+}
 
 @Component({
   selector: 'app-positions-form-page',
-  imports: [HlmButtonImports, PositionsFormComponent],
+  imports: [HlmButtonImports, HlmDialogImports, PositionsFormComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './positions-form-page.component.html',
 })
 export class PositionsFormPageComponent {
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  private readonly positionsService = inject(PositionsService);
-  private readonly companyService = inject(CompanyService);
+  protected readonly context = injectBrnDialogContext<JobRoleDialogContext>();
+  protected readonly dialogRef = inject(BrnDialogRef);
+  private readonly jobRolesService = inject(JobRolesService);
 
-  private readonly positionId = this.route.snapshot.paramMap.get('id');
-  protected readonly isEditMode = this.positionId !== null;
+  private readonly positionId = this.context.jobRoleId;
+  protected readonly isEditMode = !!this.positionId;
   protected readonly formError = signal<string | null>(null);
 
   protected readonly positionResource = resource({
@@ -30,50 +41,44 @@ export class PositionsFormPageComponent {
         return null;
       }
 
-      return firstValueFrom(this.positionsService.get(this.positionId));
+      return firstValueFrom(this.jobRolesService.get(this.positionId));
     },
   });
 
-  protected readonly initialValue = computed<PositionUpsertPayload>(() => {
+  protected readonly initialValue = computed<JobRoleUpsertPayload>(() => {
     const position = this.positionResource.value();
 
     if (!position) {
       return {
         name: '',
-        installation: this.companyService.getActiveInstallationId() ?? undefined,
-        code: '',
         description: '',
         color: randomFormColor(),
-        sort_order: 0,
         active: true,
       };
     }
 
     return {
-      installation: position.installation ?? undefined,
       name: position.name,
-      code: position.code ?? '',
       description: position.description ?? '',
       color: position.color,
-      sort_order: position.sort_order ?? 0,
-      active: position.active ?? true,
+      active: position.active,
     };
   });
 
-  protected async savePosition(payload: PositionUpsertPayload): Promise<void> {
+  protected async saveJobRole(payload: JobRoleUpsertPayload): Promise<void> {
     this.formError.set(null);
 
     try {
       if (this.positionId) {
-        await firstValueFrom(this.positionsService.update(this.positionId, payload));
+        await firstValueFrom(this.jobRolesService.update(this.positionId, payload));
       } else {
-        await firstValueFrom(this.positionsService.create(payload));
+        await firstValueFrom(this.jobRolesService.create(payload));
       }
 
-      await this.router.navigate(['/settings/positions']);
+      this.context.onSaved();
+      this.dialogRef.close();
     } catch {
-      this.formError.set('We could not save this position. Please review the form and try again.');
+      this.formError.set('We could not save this job role. Please review the form and try again.');
     }
   }
-
 }

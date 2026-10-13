@@ -1,23 +1,22 @@
-<section class="flex min-w-0 flex-1 flex-col gap-6">
-  <div class="space-y-1">
-    <p class="text-muted-foreground text-sm font-medium uppercase tracking-[0.2em]">Settings</p>
-    <div>
-      <h1 class="text-3xl font-semibold tracking-tight">{{ isEditMode ? 'Edit shift' : 'New shift' }}</h1>
-      <p class="text-muted-foreground text-sm">
-        {{ isEditMode ? 'Update an existing shift definition used in planning.' : 'Create a shift definition for workforce scheduling.' }}
-      </p>
-    </div>
-  </div>
+<hlm-dialog-header class="mb-6">
+  <h2 hlmDialogTitle>{{ isEditMode ? 'Edit shift template' : 'New shift template' }}</h2>
+  <p hlmDialogDescription>
+    {{
+      isEditMode
+        ? 'Update an existing shift definition used in planning.'
+        : 'Create a shift definition for workforce scheduling.'
+    }}
+  </p>
+</hlm-dialog-header>
 
-  @if (isEditMode && shiftResource.isLoading()) {
-    <div class="bg-card rounded-lg border p-6 text-sm">Loading shift details...</div>
-  } @else {
-    <app-shifts-form
-      [initialValue]="initialValue()"
-      [submitLabel]="isEditMode ? 'Save changes' : 'Create shift'"
-      [formError]="formError()"
-      [submitForm]="saveShift.bind(this)"
-      cancelLink="/settings/shifts"
-    />
-  }
-</section>
+@if (isEditMode && shiftResource.isLoading()) {
+  <div class="py-6 text-sm">Loading shift template details...</div>
+} @else {
+  <app-shifts-form
+    [initialValue]="initialValue()"
+    [submitLabel]="isEditMode ? 'Save changes' : 'Create shift template'"
+    [formError]="formError()"
+    [submitForm]="saveShiftTemplate.bind(this)"
+    (cancelled)="dialogRef.close()"
+  />
+}

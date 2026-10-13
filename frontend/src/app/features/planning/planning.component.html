@@ -1,294 +1,95 @@
 <section class="flex min-w-0 flex-1 flex-col gap-4">
-  <header class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-    <div>
-      <p class="text-muted-foreground text-sm font-medium uppercase tracking-[0.2em]">Planning</p>
-      <h1 class="text-3xl font-semibold tracking-tight">Weekly schedule</h1>
-      <p class="text-muted-foreground text-sm">Drag an employee to any shift.</p>
+  <div class="grid gap-3 rounded-xl bg-card p-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+    <div class="flex flex-wrap items-center gap-3">
+      <hlm-toggle-group type="single" variant="outline" value="week" [nullable]="false" aria-label="Planning period">
+        <button hlmToggleGroupItem value="day" disabled>Day</button>
+        <button hlmToggleGroupItem value="week">Week</button>
+        <button hlmToggleGroupItem value="month" disabled>Month</button>
+      </hlm-toggle-group>
+      <div class="flex items-center gap-2">
+        <button hlmBtn variant="outline" size="icon" aria-label="Previous week" (click)="previousWeek()"><ng-icon name="lucideChevronLeft" /></button>
+        <hlm-date-picker [date]="weekStart()" (dateChange)="updateDate($event)">
+          <hlm-date-picker-trigger buttonId="planning-week-date" class="min-w-52 justify-center">{{ weekRangeLabel() }}</hlm-date-picker-trigger>
+        </hlm-date-picker>
+        <button hlmBtn variant="outline" size="icon" aria-label="Next week" (click)="nextWeek()"><ng-icon name="lucideChevronRight" /></button>
+      </div>
     </div>
-    <div class="flex items-center gap-2">
-      <button
-        hlmBtn
-        variant="outline"
-        size="icon"
-        aria-label="Previous week"
-        (click)="previousWeek()"
-      >
-        <ng-icon name="lucideChevronLeft" /></button
-      ><hlm-date-picker [date]="weekStart()" (dateChange)="updateDate($event)"
-        ><hlm-date-picker-trigger buttonId="planning-week-date" class="min-w-48 justify-center">{{
-          weekRangeLabel()
-        }}</hlm-date-picker-trigger></hlm-date-picker
-      ><button
-        hlmBtn
-        variant="outline"
-        size="icon"
-        aria-label="Next week"
-        (click)="nextWeek()"
-      >
-        <ng-icon name="lucideChevronRight" />
-      </button>
+    <div class="flex flex-wrap items-center justify-end gap-2">
+      <input hlmInput class="min-w-48 flex-1 sm:max-w-64" type="search" placeholder="Search employees…" aria-label="Search employees" [value]="employeeSearch()" (input)="updateEmployeeSearch($event)" />
+      <button hlmBtn variant="outline" [disabled]="entries().length === 0" (click)="exportCsv()"><ng-icon name="lucideDownload" />Export CSV</button>
+      <button hlmBtn variant="outline" size="icon" aria-label="Refresh schedule" (click)="reload()"><ng-icon name="lucideRefreshCw" /></button>
     </div>
-    <div class="flex items-center gap-2">
-      <button
-        hlmBtn
-        variant="outline"
-        [hlmDropdownMenuTrigger]="planningFilters"
-        aria-label="Filter planning"
-      >
-        <ng-icon name="lucideListFilter" /> Filters</button
-      ><button hlmBtn variant="outline" (click)="exportPlanning()" [disabled]="isExporting()">
-        <ng-icon name="lucideDownload" /> Export
-      </button>
-      @if (isSaving()) {
-        <span class="text-muted-foreground text-xs" aria-live="polite">Saving...</span>
-      } @else if (hasPendingChanges()) {
-        <span class="text-muted-foreground text-xs" aria-live="polite">Unsaved changes</span>
-      }
-      <button hlmBtn variant="outline" size="icon" aria-label="Refresh" (click)="reload()">
-        <ng-icon name="lucideRefreshCw" />
-      </button>
-    </div>
-  </header>
+  </div>
 
-  <ng-template #planningFilters>
-    <hlm-dropdown-menu class="w-64">
-      <hlm-dropdown-menu-label>Filter planning</hlm-dropdown-menu-label>
-      <hlm-dropdown-menu-separator />
-      <button hlmDropdownMenuItem type="button" [hlmDropdownMenuSubTrigger]="zoneFilters">
-        Zone<hlm-dropdown-menu-item-sub-indicator />
-      </button>
-      <button hlmDropdownMenuItem type="button" [hlmDropdownMenuSubTrigger]="positionFilters">
-        Position<hlm-dropdown-menu-item-sub-indicator />
-      </button>
-      <hlm-dropdown-menu-separator />
-      <button
-        hlmDropdownMenuItem
-        type="button"
-        (click)="zoneFilter.set('all'); positionFilter.set('all')"
-      >
-        Clear filters
-      </button>
-    </hlm-dropdown-menu>
-    <ng-template #zoneFilters>
-      <hlm-dropdown-menu-sub>
-        <button
-          hlmDropdownMenuItem
-          type="button"
-          [attr.aria-pressed]="zoneFilter() === 'all'"
-          (click)="zoneFilter.set('all')"
-        >
-          All zones
-        </button>
-        @for (zone of data()?.zones ?? []; track zone.id) {
-          <button
-            hlmDropdownMenuItem
-            type="button"
-            [attr.aria-pressed]="zoneFilter() === zone.id"
-            (click)="zoneFilter.set(zone.id)"
-          >
-            {{ zone.name }}
-          </button>
-        }
-      </hlm-dropdown-menu-sub>
-    </ng-template>
-    <ng-template #positionFilters>
-      <hlm-dropdown-menu-sub>
-        <button
-          hlmDropdownMenuItem
-          type="button"
-          [attr.aria-pressed]="positionFilter() === 'all'"
-          (click)="positionFilter.set('all')"
-        >
-          All positions
-        </button>
-        @for (position of data()?.positions ?? []; track position.id) {
-          <button
-            hlmDropdownMenuItem
-            type="button"
-            [attr.aria-pressed]="positionFilter() === position.id"
-            (click)="positionFilter.set(position.id)"
-          >
-            {{ position.name }}
-          </button>
-        }
-      </hlm-dropdown-menu-sub>
-    </ng-template>
-  </ng-template>
-
-  @if (saveError(); as error) {
-    <p class="text-destructive text-sm" role="alert">{{ error }}</p>
-  }
-  @if (planningResource.isLoading() || planningWeekResource.isLoading()) {
-    <hlm-card
-      ><div hlmCardContent class="p-10 text-center">Loading planning...</div></hlm-card
-    >
-  } @else if (planningResource.error() || planningWeekResource.error()) {
-    <hlm-card
-      ><div hlmCardContent class="flex flex-col items-center gap-3 p-10">
-        <p>Could not load planning.</p>
-        <button hlmBtn variant="outline" (click)="reload()">Retry</button>
-      </div></hlm-card
-    >
+  @if (!activeInstallationId() || catalogResource.isLoading() || entriesResource.isLoading()) {
+    <hlm-card><div hlmCardContent class="p-10 text-center">Loading schedule…</div></hlm-card>
+  } @else if (catalogResource.error() || entriesResource.error()) {
+    <hlm-card><div hlmCardContent class="flex flex-col items-center gap-3 p-10"><p>Could not load the schedule.</p><button hlmBtn variant="outline" (click)="reload()">Retry</button></div></hlm-card>
   } @else {
-    <div cdkDropListGroup class="grid min-w-0 gap-4 xl:grid-cols-[18rem_minmax(0,1fr)]">
-      <aside class="min-w-0">
-        <hlm-card class="sticky top-4">
-          <div hlmCardHeader class="border-b">
-            <div class="flex items-start justify-between">
-              <div>
-                <h2 hlmCardTitle>Employees</h2>
-                <p hlmCardDescription>{{ visibleStaffCount() }} available</p>
-              </div>
-            </div>
-          </div>
-          <div hlmCardContent class="space-y-3">
-            <input
-              hlmInput
-              type="search"
-              placeholder="Search employees..."
-              aria-label="Search employees"
-              [value]="employeeSearch()"
-              (input)="employeeSearch.set($any($event.target).value)"
-            />
-            <p class="text-muted-foreground rounded-md bg-muted/50 p-2 text-xs">
-              Drag an employee to any shift
-            </p>
-            <div
-              cdkDropList
-              [cdkDropListData]="visibleEmployees()"
-              cdkDropListSortingDisabled
-              class="max-h-[calc(100vh-20rem)] space-y-2 overflow-y-auto"
-            >
-              @for (employee of visibleEmployees(); track employee.id) {
-                <app-planning-employee-card
-                  [employee]="employee"
-                  [positionName]="positionName(employeePositionId(employee))"
-                />
-              }
-              @if (visibleEmployees().length === 0) {
-                <p class="text-muted-foreground py-4 text-center text-sm">No employees found.</p>
-              }
-            </div>
-          </div>
-        </hlm-card>
-      </aside>
-
-      <main class="min-w-0 space-y-3">
-        <div class="text-muted-foreground flex flex-wrap items-center gap-4 px-1 text-xs">
-          <span><i class="mr-1 inline-block size-2 rounded-full bg-secondary"></i>Covered</span
-          ><span
-            ><i class="mr-1 inline-block size-2 rounded-full bg-yellow-400"></i>Understaffed</span
-          ><span
-            ><i class="mr-1 inline-block size-2 rounded-full bg-destructive"></i
-            >Position mismatch</span
-          >
-          <app-planning-issues-sheet
-            [issues]="warningIssues()"
-            [employeeNames]="employeeNames()"
-          />
-        </div>
-        <div hlmTableContainer class="rounded-xl border bg-card">
-          <table hlmTable class="w-full min-w-[58rem] table-fixed">
-            <caption class="sr-only">
-              Weekly schedule by zone and shift
-            </caption>
-            <thead hlmTableHeader>
-              <tr hlmTableRow>
-                <th hlmTableHead class="sticky left-0 z-10 w-40 min-w-40 bg-card">
-                  <span class="sr-only">Zone, shift, and required positions</span>
-                </th>
-                @for (day of days(); track day.isoDate) {
-                  <th hlmTableHead class="w-28 min-w-28 px-2 text-center">
-                    <strong>{{ day.label }}</strong
-                    ><span class="text-muted-foreground block text-xs font-normal">{{
-                      day.dateLabel
-                    }}</span>
-                  </th>
-                }
-              </tr>
-            </thead>
-            <tbody hlmTableBody>
-              @for (row of rows(); track row.id) {
-                <tr hlmTableRow>
-                  <th
-                    hlmTableCell
-                    class="sticky left-0 z-10 w-40 min-w-40 bg-card p-2 text-left align-top"
+    <div hlmTableContainer class="rounded-xl border bg-card">
+      <table hlmTable class="w-full min-w-[68rem] table-fixed">
+        <caption class="sr-only">Weekly schedule by employee and day</caption>
+        <thead hlmTableHeader>
+          <tr hlmTableRow>
+            <th hlmTableHead class="sticky left-0 z-10 w-52 min-w-52 bg-card">Employee</th>
+            @for (day of days(); track day.date) {
+              <th hlmTableHead class="min-w-36 px-2 text-center"><strong>{{ day.weekday }}</strong><span class="text-muted-foreground block text-xs font-normal">{{ day.displayDate }}</span></th>
+            }
+          </tr>
+        </thead>
+        <tbody hlmTableBody cdkDropList [cdkDropListData]="employees()" [cdkDropListConnectedTo]="dropListIds()" [cdkDropListSortingDisabled]="true">
+          @for (employee of employees(); track employee.id) {
+            <tr hlmTableRow>
+              <th hlmTableCell class="sticky left-0 z-10 w-52 min-w-52 bg-card p-2 text-left align-top">
+                <div
+                  cdkDrag
+                  [cdkDragData]="employee"
+                  class="focus-visible:ring-ring flex cursor-grab items-center gap-2 rounded-md p-2 active:cursor-grabbing focus-visible:ring-2 focus-visible:outline-none"
+                  tabindex="0"
+                  role="group"
+                  [attr.aria-label]="'Drag ' + employee.first_name + ' ' + employee.last_name + ' to a day to add a schedule entry'"
+                >
+                  <span class="size-3 rounded-full" [style.background-color]="employee.color ?? 'currentColor'" aria-hidden="true"></span>
+                  <span class="font-medium">{{ employee.first_name }} {{ employee.last_name }}</span>
+                </div>
+              </th>
+              @for (day of days(); track day.date) {
+                <td hlmTableCell class="min-w-36 p-1 align-top">
+                  <div
+                    cdkDropList
+                    [id]="dropListId(employee.id, day.date)"
+                    [cdkDropListConnectedTo]="dropListIds()"
+                    [cdkDropListSortingDisabled]="true"
+                    class="group flex min-h-[68px] flex-col gap-1 rounded-md p-1"
+                    [class.justify-center]="entriesFor(employee.id, day.date).length === 0"
+                    [attr.aria-label]="'Schedule entries for ' + employee.first_name + ' ' + employee.last_name + ' on ' + day.date"
+                    [cdkDropListData]="cell(employee.id, day.date)"
+                    (cdkDropListDropped)="handleDrop($event)"
                   >
-                    <div class="flex items-center gap-1.5 truncate font-medium">
-                      <span
-                        class="size-2.5 shrink-0 rounded-sm"
-                        [style.background-color]="zoneColor(row.preset.zone)"
-                        aria-hidden="true"
-                      ></span
-                      ><span class="truncate">{{ zoneName(row.preset.zone) }}</span>
-                    </div>
-                    <div class="text-muted-foreground flex items-center gap-1.5 truncate text-xs">
-                      <ng-icon
-                        name="lucideClock3"
-                        class="size-3.5 shrink-0"
-                        aria-hidden="true"
-                      /><span class="truncate">{{ shiftLabel(row.preset.shift) }}</span>
-                    </div>
-                    <div class="mt-1 space-y-0.5">
-                      @for (requirement of row.requirements; track requirement.id) {
-                        <div class="text-muted-foreground flex items-center gap-1.5 truncate text-xs">
-                          <ng-icon
-                            name="lucideUserRound"
-                            class="size-3.5 shrink-0"
-                            aria-hidden="true"
-                          /><span class="truncate"
-                            >{{ requirement.position.name }} · {{ requirement.minimum }} required</span
-                          >
-                        </div>
-                      }
-                    </div>
-                  </th>
-                  @for (day of days(); track day.isoDate) {
-                    <td hlmTableCell class="w-28 min-w-28 p-1.5 align-top">
-                      <div class="flex h-full min-h-32 flex-col gap-1.5">
-                        <div class="flex items-center justify-between gap-1 px-1 text-xs">
-                          <span class="truncate font-medium">{{
-                            shiftName(row.preset.shift)
-                          }}</span>
-                          @if (coverage(row, day.isoDate) >= requiredCount(row, day.isoDate)) {
-                            <span hlmBadge variant="secondary"
-                              >{{ coverage(row, day.isoDate) }}/{{ requiredCount(row, day.isoDate) }}</span
-                            >
-                          } @else {
-                            <span
-                              hlmBadge
-                              variant="outline"
-                              class="border-yellow-300 bg-yellow-100 text-yellow-900 dark:border-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-200"
-                              >{{ coverage(row, day.isoDate) }}/{{ requiredCount(row, day.isoDate) }}</span
-                            >
-                          }
-                        </div>
-                        <app-planning-drop-zone
-                          class="flex min-h-24 flex-1"
-                          [preset]="row.preset"
-                          [assigned]="assignmentsFor(row, day.isoDate)"
-                          [date]="day.isoDate"
-                          [requiredPositionIds]="requiredPositionIds(row)"
-                          [shiftLabel]="shiftName(row.preset.shift)"
-                          (dropped)="moveEmployee($event, day.isoDate, row.preset)"
-                          (removed)="remove($event, day.isoDate)"
-                        />
-                      </div>
-                    </td>
-                  }
-                </tr>
+                    @for (entry of entriesFor(employee.id, day.date); track entry.id) {
+                      <app-shift-entry
+                        [entry]="entry"
+                        [roleName]="roleName(entry.job_role)"
+                        [baseColor]="roleColor(entry.job_role)"
+                        [timeRange]="timeRange(entry)"
+                        [disabled]="isEntryMoving(entry.id)"
+                        (edit)="openEdit($event)"
+                      />
+                    }
+                    @if (entriesFor(employee.id, day.date).length === 0) {
+                      <button hlmBtn type="button" variant="ghost" size="icon" class="self-center opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100" [attr.aria-label]="'Add schedule entry for ' + employee.first_name + ' ' + employee.last_name + ' on ' + day.date" (click)="openCreate(employee.id, day.date)">
+                        <ng-icon name="lucidePlus" />
+                      </button>
+                    }
+                  </div>
+                </td>
               }
-              @if (rows().length === 0) {
-                <tr hlmTableRow>
-                  <td hlmTableCell colspan="8" class="p-10 text-center text-muted-foreground">
-                    No staffing requirements are configured to display.
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </main>
+            </tr>
+          } @empty {
+            <tr hlmTableRow><td hlmTableCell colspan="8" class="p-10 text-center text-muted-foreground">No active employees match this search.</td></tr>
+          }
+        </tbody>
+      </table>
     </div>
   }
 </section>

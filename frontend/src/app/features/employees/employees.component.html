@@ -5,7 +5,7 @@
       <div>
         <h1 class="text-3xl font-semibold tracking-tight">Employees</h1>
         <p class="text-muted-foreground text-sm">
-          Review your workforce roster and the planning rules attached to each person.
+          Consulta el equipo y los puestos asignados a cada persona.
         </p>
       </div>
     </div>
@@ -44,7 +44,7 @@
         <div class="space-y-1">
           <p class="font-medium">No employees yet</p>
           <p class="text-muted-foreground text-sm">
-            Create your first employee to start assigning positions and availability.
+            Crea tu primer empleado y asígnale al menos un puesto.
           </p>
         </div>
 
@@ -60,7 +60,7 @@
           <tr hlmTableRow>
             <th hlmTableHead>Name</th>
             <th hlmTableHead>Status</th>
-            <th hlmTableHead>Position</th>
+            <th hlmTableHead>Puesto</th>
             <th hlmTableHead class="text-right">Actions</th>
           </tr>
         </thead>
@@ -78,7 +78,7 @@
                   {{ employee.active ? 'Active' : 'Inactive' }}
                 </span>
               </td>
-              <td hlmTableCell class="text-muted-foreground">{{ employee.positionName }}</td>
+              <td hlmTableCell class="text-muted-foreground">{{ employee.jobRoleName }}</td>
               <td hlmTableCell class="text-right">
                 <div class="flex justify-end gap-2">
                   <button hlmBtn type="button" variant="outline" size="sm" [routerLink]="[employee.id, 'edit']">Edit</button>

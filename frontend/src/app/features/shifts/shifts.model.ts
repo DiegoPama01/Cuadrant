@@ -1,26 +1,24 @@
-export interface Shift {
+export interface ShiftTemplate {
   id: string;
   installation?: string | null;
   name: string;
-  code?: string | null;
+  description?: string | null;
   start_time: string;
   end_time: string;
   break_minutes?: number;
   color: string;
-  sort_order?: number;
-  active?: boolean;
-  created_at?: string;
-  updated_at?: string;
+  sort_order: number;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface ShiftUpsertPayload {
-  installation?: string;
+export interface ShiftTemplateUpsertPayload {
   name: string;
-  code: string;
+  description: string;
   start_time: string;
   end_time: string;
   break_minutes: number;
   color: string;
-  sort_order: number;
   active: boolean;
 }

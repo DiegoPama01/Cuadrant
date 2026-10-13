@@ -24,9 +24,9 @@ describe('application routes', () => {
     expect(settingsChildren.map((route) => route.path)).toEqual([
       'company',
       'installations',
-      'positions',
-      'zones',
-      'shifts',
+       'job-roles',
+       'work-areas',
+       'shift-templates',
     ]);
   });
 });
