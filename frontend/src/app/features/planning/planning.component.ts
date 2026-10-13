@@ -20,6 +20,7 @@ import { ScheduleEntryDialogComponent } from './schedule-entry-dialog.component'
 import { buildScheduleEntriesCsv } from './schedule-entry-export';
 import { ScheduleEntriesService } from './schedule-entries.service';
 import { ScheduleEntry } from './schedule-entry.model';
+import { ShiftEntryComponent } from './shift-entry.component';
 import { ShiftTemplatesService } from './shift-templates.service';
 import { AlertService } from '../../core/alerts/alert.service';
 
@@ -49,6 +50,7 @@ type PlanningDragData = Employee | ScheduleEntry;
     HlmToggleGroupImports,
     CdkDrag,
     CdkDropList,
+    ShiftEntryComponent,
   ],
   providers: [
     provideIcons({ lucideChevronLeft, lucideChevronRight, lucideDownload, lucidePlus, lucideRefreshCw }),
@@ -134,6 +136,9 @@ export class PlanningComponent {
   protected readonly roleNames = computed(
     () => new Map((this.catalog()?.jobRoles ?? []).map((role) => [role.id, role.name])),
   );
+  protected readonly roleColors = computed(
+    () => new Map((this.catalog()?.jobRoles ?? []).map((role) => [role.id, role.color])),
+  );
   private readonly employeeNames = computed(
     () =>
       new Map(
@@ -198,6 +203,10 @@ export class PlanningComponent {
 
   protected roleName(id: string): string {
     return this.roleNames().get(id) ?? 'Job role';
+  }
+
+  protected roleColor(id: string): string {
+    return this.roleColors().get(id) ?? 'var(--primary)';
   }
 
   protected timeRange(entry: ScheduleEntry): string {

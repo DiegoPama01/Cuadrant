@@ -38,7 +38,7 @@
         <tbody hlmTableBody cdkDropList [cdkDropListData]="employees()" [cdkDropListConnectedTo]="dropListIds()" [cdkDropListSortingDisabled]="true">
           @for (employee of employees(); track employee.id) {
             <tr hlmTableRow>
-              <th hlmTableCell class="sticky left-0 z-10 w-52 min-w-52 bg-card p-3 text-left align-top">
+              <th hlmTableCell class="sticky left-0 z-10 w-52 min-w-52 bg-card p-2 text-left align-top">
                 <div
                   cdkDrag
                   [cdkDragData]="employee"
@@ -52,27 +52,33 @@
                 </div>
               </th>
               @for (day of days(); track day.date) {
-                <td hlmTableCell class="min-w-36 p-1.5 align-top">
+                <td hlmTableCell class="min-w-36 p-1 align-top">
                   <div
                     cdkDropList
                     [id]="dropListId(employee.id, day.date)"
                     [cdkDropListConnectedTo]="dropListIds()"
                     [cdkDropListSortingDisabled]="true"
-                    class="group flex min-h-28 flex-col gap-1.5 rounded-md p-1"
+                    class="group flex min-h-[68px] flex-col gap-1 rounded-md p-1"
+                    [class.justify-center]="entriesFor(employee.id, day.date).length === 0"
                     [attr.aria-label]="'Schedule entries for ' + employee.first_name + ' ' + employee.last_name + ' on ' + day.date"
                     [cdkDropListData]="cell(employee.id, day.date)"
                     (cdkDropListDropped)="handleDrop($event)"
                   >
                     @for (entry of entriesFor(employee.id, day.date); track entry.id) {
-                      <button cdkDrag [cdkDragData]="entry" [cdkDragDisabled]="isEntryMoving(entry.id)" type="button" class="border-primary/20 bg-primary/5 hover:bg-primary/10 focus-visible:ring-ring cursor-grab rounded-md border p-2 text-left text-xs transition-colors active:cursor-grabbing focus-visible:ring-2 focus-visible:outline-none disabled:cursor-wait" [attr.aria-label]="'Drag or edit ' + timeRange(entry) + ' ' + roleName(entry.job_role)" (click)="$event.stopPropagation(); openEdit(entry)">
-                        <span class="block font-semibold">{{ timeRange(entry) }}</span>
-                        <span class="text-muted-foreground block truncate">{{ roleName(entry.job_role) }}</span>
-                        @if (entry.notes) { <span class="text-muted-foreground block truncate">{{ entry.notes }}</span> }
+                      <app-shift-entry
+                        [entry]="entry"
+                        [roleName]="roleName(entry.job_role)"
+                        [baseColor]="roleColor(entry.job_role)"
+                        [timeRange]="timeRange(entry)"
+                        [disabled]="isEntryMoving(entry.id)"
+                        (edit)="openEdit($event)"
+                      />
+                    }
+                    @if (entriesFor(employee.id, day.date).length === 0) {
+                      <button hlmBtn type="button" variant="ghost" size="icon" class="self-center opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100" [attr.aria-label]="'Add schedule entry for ' + employee.first_name + ' ' + employee.last_name + ' on ' + day.date" (click)="openCreate(employee.id, day.date)">
+                        <ng-icon name="lucidePlus" />
                       </button>
                     }
-                    <button hlmBtn type="button" variant="ghost" size="icon" class="mt-auto self-center opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100" [attr.aria-label]="'Add schedule entry for ' + employee.first_name + ' ' + employee.last_name + ' on ' + day.date" (click)="openCreate(employee.id, day.date)">
-                      <ng-icon name="lucidePlus" />
-                    </button>
                   </div>
                 </td>
               }
