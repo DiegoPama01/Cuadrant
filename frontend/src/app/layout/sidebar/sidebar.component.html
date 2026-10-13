@@ -52,9 +52,6 @@
       <button hlmDropdownMenuItem type="button" (click)="selectInstallation(installation.id)">
         <div class="grid flex-1 text-left text-sm leading-tight">
           <span class="truncate font-medium">{{ installation.name }}</span>
-          @if (installation.code) {
-            <span class="text-muted-foreground truncate text-xs">{{ installation.code }}</span>
-          }
         </div>
         @if (installation.id === activeInstallationId()) {
           <ng-icon name="lucideCheck" class="ml-2 text-base" />

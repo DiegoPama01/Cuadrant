@@ -37,7 +37,6 @@ export class PositionsFormComponent {
 
   protected readonly model = signal<JobRoleUpsertPayload>({
     name: '',
-    code: '',
     description: '',
     color: randomFormColor(),
     active: true,

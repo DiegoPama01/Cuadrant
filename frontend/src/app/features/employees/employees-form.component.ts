@@ -45,7 +45,7 @@ export class EmployeesFormComponent {
   protected readonly jobRoleOptions = computed<SelectionTableItem[]>(() =>
     this.jobRoles()
       .filter((jobRole) => jobRole.active !== false)
-      .map((jobRole) => ({ id: jobRole.id, label: jobRole.name, detail: jobRole.code ?? undefined })),
+      .map((jobRole) => ({ id: jobRole.id, label: jobRole.name })),
   );
   protected readonly primaryJobRoleId = computed(
     () => this.model().job_roles.find((jobRole) => jobRole.primary)?.job_role ?? null,

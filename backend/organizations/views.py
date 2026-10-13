@@ -27,7 +27,6 @@ class InstallationCreateView(APIView):
             installation = Installation.objects.create(
                 company=company,
                 name=serializer.validated_data["name"],
-                code=serializer.validated_data.get("code"),
                 address=serializer.validated_data.get("address"),
                 timezone=serializer.validated_data.get("timezone"),
                 active=serializer.validated_data.get("active", True),
@@ -73,7 +72,6 @@ class CompanyViewSet(viewsets.ModelViewSet):
             installation = Installation.objects.create(
                 company=company,
                 name=initial_installation.get("name") or company.name,
-                code=initial_installation.get("code"),
                 address=initial_installation.get("address"),
                 timezone=initial_installation.get("timezone") or company.timezone,
                 active=initial_installation.get("active", True),

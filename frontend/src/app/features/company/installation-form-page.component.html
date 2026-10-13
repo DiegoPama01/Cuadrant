@@ -1,4 +1,4 @@
-<hlm-dialog-header>
+<hlm-dialog-header class="mb-6">
   <h2 hlmDialogTitle>{{ title() }}</h2>
   <p hlmDialogDescription>
     Set the basic data used to scope employees, job roles, work areas and shift templates.
@@ -24,28 +24,16 @@
         }
       </hlm-field>
 
-      <div class="grid gap-6 md:grid-cols-2">
-        <hlm-field>
-          <label hlmFieldLabel for="installation-code">Code</label>
-          <input
-            hlmInput
-            id="installation-code"
-            type="text"
-            placeholder="MAIN"
-            [formField]="installationForm.code"
-          />
-        </hlm-field>
-        <hlm-field>
-          <label hlmFieldLabel for="installation-timezone">Timezone</label>
-          <input
-            hlmInput
-            id="installation-timezone"
-            type="text"
-            placeholder="Europe/Madrid"
-            [formField]="installationForm.timezone"
-          />
-        </hlm-field>
-      </div>
+      <hlm-field>
+        <label hlmFieldLabel for="installation-timezone">Timezone</label>
+        <input
+          hlmInput
+          id="installation-timezone"
+          type="text"
+          placeholder="Europe/Madrid"
+          [formField]="installationForm.timezone"
+        />
+      </hlm-field>
 
       <hlm-field>
         <label hlmFieldLabel for="installation-address">Address</label>

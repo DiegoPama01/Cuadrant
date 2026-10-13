@@ -53,7 +53,7 @@ class JobRoleSerializer(InstallationScopedModelSerializer):
 
     class Meta:
         model = JobRole
-        fields = ("id", "installation", "name", "code", "description", "color", "sort_order", "active", "created_at", "updated_at")
+        fields = ("id", "installation", "name", "description", "color", "sort_order", "active", "created_at", "updated_at")
         read_only_fields = ("id", "created_at", "updated_at")
 
     installation_fields = ("installation",)

@@ -51,7 +51,6 @@ export class PositionsFormPageComponent {
     if (!position) {
       return {
         name: '',
-        code: '',
         description: '',
         color: randomFormColor(),
         active: true,
@@ -60,7 +59,6 @@ export class PositionsFormPageComponent {
 
     return {
       name: position.name,
-      code: position.code ?? '',
       description: position.description ?? '',
       color: position.color,
       active: position.active,

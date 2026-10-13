@@ -2,7 +2,6 @@ export interface ShiftTemplate {
   id: string;
   installation?: string | null;
   name: string;
-  code?: string | null;
   description?: string | null;
   start_time: string;
   end_time: string;
@@ -16,7 +15,6 @@ export interface ShiftTemplate {
 
 export interface ShiftTemplateUpsertPayload {
   name: string;
-  code: string;
   description: string;
   start_time: string;
   end_time: string;

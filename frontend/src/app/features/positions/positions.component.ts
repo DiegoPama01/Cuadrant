@@ -57,7 +57,7 @@ export class PositionsComponent {
 
   protected openJobRoleForm(jobRoleId?: string): void {
     this.dialog.open<unknown, JobRoleDialogContext>(PositionsFormPageComponent, {
-      contentClass: 'max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-3xl',
+      contentClass: 'w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-4xl',
       context: {
         jobRoleId,
         onSaved: () => this.reload(),

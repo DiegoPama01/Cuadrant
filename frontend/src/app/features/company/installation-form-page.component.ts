@@ -25,7 +25,6 @@ export interface InstallationDialogContext {
 
 interface InstallationFormModel {
   name: string;
-  code: string;
   address: string;
   timezone: string;
   active: boolean;
@@ -56,7 +55,6 @@ export class InstallationFormPageComponent {
   protected readonly formError = signal<string | null>(null);
   protected readonly model = signal<InstallationFormModel>({
     name: '',
-    code: '',
     address: '',
     timezone: '',
     active: true,
@@ -70,7 +68,6 @@ export class InstallationFormPageComponent {
       const installation = await firstValueFrom(this.installationsService.get(this.installationId));
       this.model.set({
         name: installation.name,
-        code: installation.code ?? '',
         address: installation.address ?? '',
         timezone: installation.timezone ?? '',
         active: installation.active ?? true,
@@ -131,7 +128,6 @@ export class InstallationFormPageComponent {
   private normalizePayload(value: InstallationFormModel): InstallationUpsertPayload {
     return {
       ...value,
-      code: value.code?.trim() || null,
       address: value.address?.trim() || null,
       timezone: value.timezone?.trim() || null,
     };

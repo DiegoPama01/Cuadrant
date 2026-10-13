@@ -21,7 +21,7 @@
     </div>
   </div>
 
-  @if (catalogResource.isLoading() || entriesResource.isLoading()) {
+  @if (!activeInstallationId() || catalogResource.isLoading() || entriesResource.isLoading()) {
     <hlm-card><div hlmCardContent class="p-10 text-center">Loading schedule…</div></hlm-card>
   } @else if (catalogResource.error() || entriesResource.error()) {
     <hlm-card><div hlmCardContent class="flex flex-col items-center gap-3 p-10"><p>Could not load the schedule.</p><button hlmBtn variant="outline" (click)="reload()">Retry</button></div></hlm-card>

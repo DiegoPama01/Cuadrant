@@ -7,14 +7,18 @@ import { lucideChevronLeft, lucideChevronRight, lucideDownload, lucidePlus, luci
 import { HlmBadgeImports } from '@spartan-ng/helm/badge';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmCardImports } from '@spartan-ng/helm/card';
+import { HlmComboboxImports } from '@spartan-ng/helm/combobox';
 import { HlmDatePickerImports } from '@spartan-ng/helm/date-picker';
 import { HlmDialogService } from '@spartan-ng/helm/dialog';
 import { HlmInputImports } from '@spartan-ng/helm/input';
 import { HlmTableImports } from '@spartan-ng/helm/table';
 import { HlmToggleGroupImports } from '@spartan-ng/helm/toggle-group';
+import { AuthService } from '../../core/auth/auth.service';
 import { Employee } from '../employees/employees.model';
 import { EmployeesService } from '../employees/employees.service';
 import { JobRolesService } from '../job-roles/job-roles.service';
+import { WorkArea } from '../zones/zones.model';
+import { WorkAreasService } from '../zones/zones.service';
 import { localDate, localScheduleDatetimes, timeFromDateTime } from './schedule-entry-time';
 import { ScheduleEntryDialogComponent } from './schedule-entry-dialog.component';
 import { buildScheduleEntriesCsv } from './schedule-entry-export';
@@ -44,6 +48,7 @@ type PlanningDragData = Employee | ScheduleEntry;
     HlmBadgeImports,
     HlmButtonImports,
     HlmCardImports,
+    HlmComboboxImports,
     HlmDatePickerImports,
     HlmInputImports,
     HlmTableImports,
@@ -59,8 +64,10 @@ type PlanningDragData = Employee | ScheduleEntry;
   templateUrl: './planning.component.html',
 })
 export class PlanningComponent {
+  private readonly authService = inject(AuthService);
   private readonly employeesService = inject(EmployeesService);
   private readonly jobRolesService = inject(JobRolesService);
+  private readonly workAreasService = inject(WorkAreasService);
   private readonly scheduleEntriesService = inject(ScheduleEntriesService);
   private readonly shiftTemplatesService = inject(ShiftTemplatesService);
   private readonly dialog = inject(HlmDialogService);
@@ -68,23 +75,35 @@ export class PlanningComponent {
   private readonly document = inject(DOCUMENT);
 
   protected readonly selectedDate = signal(localDate(new Date()));
+  protected readonly activeInstallationId = this.authService.activeInstallationId;
   protected readonly employeeSearch = signal('');
   private readonly localChanges = signal<ScheduleEntry[] | null>(null);
   private readonly movingEntryIds = signal<ReadonlySet<string>>(new Set());
 
   protected readonly catalogResource = resource({
-    loader: async () =>
-      firstValueFrom(
+    params: () => ({ installationId: this.activeInstallationId() }),
+    loader: async ({ params }) => {
+      if (!params.installationId) return null;
+
+      return firstValueFrom(
         forkJoin({
           employees: this.employeesService.list(),
           jobRoles: this.jobRolesService.list(),
+          workAreas: this.workAreasService.list(),
           shiftTemplates: this.shiftTemplatesService.list(),
         }),
-      ),
+      );
+    },
   });
   protected readonly entriesResource = resource({
-    params: () => ({ weekStart: this.weekStartIso() }),
-    loader: async () => firstValueFrom(this.scheduleEntriesService.list()),
+    params: () => ({
+      installationId: this.activeInstallationId(),
+      weekStart: this.weekStartIso(),
+    }),
+    loader: async ({ params }) => {
+      if (!params.installationId) return [];
+      return firstValueFrom(this.scheduleEntriesService.list());
+    },
   });
 
   protected readonly weekStart = computed(() => this.startOfWeek(new Date(`${this.selectedDate()}T12:00:00`)));
@@ -240,6 +259,7 @@ export class PlanningComponent {
         date: date.slice(0, 10),
         employees: catalog.employees,
         jobRoles: catalog.jobRoles,
+        workAreas: catalog.workAreas,
         shiftTemplates: catalog.shiftTemplates,
         onSaved: (saved: ScheduleEntry) => this.upsertEntry(saved),
         onDeleted: (id: string) => this.removeEntry(id),

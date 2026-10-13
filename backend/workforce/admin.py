@@ -19,7 +19,7 @@ from .models import (
 
 @admin.register(JobRole, WorkArea)
 class InstallationResourceAdmin(admin.ModelAdmin):
-    list_display = ("name", "installation", "code", "active")
+    list_display = ("name", "installation", "active")
     list_filter = ("installation__company", "installation", "active")
 
 

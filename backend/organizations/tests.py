@@ -67,7 +67,7 @@ class OrganizationApiTests(APITestCase):
             {
                 "name": "New Group",
                 "timezone": "Europe/Madrid",
-                "initial_installation": {"name": "Downtown", "code": "DT"},
+                "initial_installation": {"name": "Downtown"},
             },
             format="json",
         )
@@ -81,7 +81,7 @@ class OrganizationApiTests(APITestCase):
                 role=CompanyMembership.Role.OWNER,
             ).exists()
         )
-        self.assertTrue(company.installations.filter(name="Downtown", code="DT").exists())
+        self.assertTrue(company.installations.filter(name="Downtown").exists())
 
     def test_member_cannot_update_company(self):
         self.client.force_authenticate(self.member)
@@ -102,6 +102,7 @@ class OrganizationApiTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertNotIn("code", response.data)
         self.assertTrue(self.company.installations.filter(name="Beach Hotel").exists())
 
     def test_member_cannot_create_installation_inside_company(self):

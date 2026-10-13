@@ -50,7 +50,6 @@ export class ZonesFormPageComponent {
     if (!workArea) {
       return {
         name: '',
-        code: '',
         description: '',
         color: randomFormColor(),
         active: true,
@@ -59,7 +58,6 @@ export class ZonesFormPageComponent {
 
     return {
       name: workArea.name,
-      code: workArea.code ?? '',
       description: workArea.description ?? '',
       color: workArea.color,
       active: workArea.active,

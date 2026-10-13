@@ -57,7 +57,7 @@ export class ShiftsComponent {
 
   protected openShiftTemplateForm(shiftTemplateId?: string): void {
     this.dialog.open<unknown, ShiftTemplateDialogContext>(ShiftsFormPageComponent, {
-      contentClass: 'max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-4xl',
+      contentClass: 'w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-5xl',
       context: {
         shiftTemplateId,
         onSaved: () => this.reload(),

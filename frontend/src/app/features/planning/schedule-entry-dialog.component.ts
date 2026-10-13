@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { BrnDialogRef, injectBrnDialogContext } from '@spartan-ng/brain/dialog';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
+import { HlmComboboxImports } from '@spartan-ng/helm/combobox';
 import { HlmDialogImports } from '@spartan-ng/helm/dialog';
 import { HlmFieldImports } from '@spartan-ng/helm/field';
 import { HlmInputImports } from '@spartan-ng/helm/input';
@@ -10,6 +11,7 @@ import { HlmTextareaImports } from '@spartan-ng/helm/textarea';
 import { firstValueFrom } from 'rxjs';
 import { Employee } from '../employees/employees.model';
 import { JobRole } from '../job-roles/job-roles.model';
+import { WorkArea } from '../zones/zones.model';
 import { localScheduleDatetimes, timeFromDateTime } from './schedule-entry-time';
 import { ScheduleEntriesService } from './schedule-entries.service';
 import { ScheduleEntry, ScheduleEntryUpsertPayload, ShiftTemplate } from './schedule-entry.model';
@@ -20,6 +22,7 @@ export interface ScheduleEntryDialogContext {
   date: string;
   employees: Employee[];
   jobRoles: JobRole[];
+  workAreas: WorkArea[];
   shiftTemplates: ShiftTemplate[];
   onSaved: (entry: ScheduleEntry) => void;
   onDeleted: (entryId: string) => void;
@@ -27,7 +30,7 @@ export interface ScheduleEntryDialogContext {
 
 @Component({
   selector: 'app-schedule-entry-dialog',
-  imports: [NgTemplateOutlet, ReactiveFormsModule, HlmButtonImports, HlmDialogImports, HlmFieldImports, HlmInputImports, HlmTextareaImports],
+  imports: [NgTemplateOutlet, ReactiveFormsModule, HlmButtonImports, HlmComboboxImports, HlmDialogImports, HlmFieldImports, HlmInputImports, HlmTextareaImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './schedule-entry-dialog.component.html',
 })
@@ -37,6 +40,9 @@ export class ScheduleEntryDialogComponent {
   private readonly scheduleEntries = inject(ScheduleEntriesService);
   protected readonly entry = this.context.entry;
   protected readonly employees = this.context.employees.filter((employee) => employee.active);
+  protected readonly workAreas = this.context.workAreas.filter(
+    (workArea) => workArea.active || workArea.id === this.entry?.work_area,
+  );
   private readonly selectedEmployeeId = signal(this.context.employeeId);
   protected readonly selectedEmployee = computed(() =>
     this.employees.find((employee) => employee.id === this.selectedEmployeeId()),
@@ -45,6 +51,9 @@ export class ScheduleEntryDialogComponent {
     const roleIds = new Set(this.selectedEmployee()?.job_roles.map((role) => role.job_role) ?? []);
     return this.context.jobRoles.filter((role) => roleIds.has(role.id));
   });
+  protected readonly selectedJobRole = computed(() =>
+    this.allowedJobRoles().find((role) => role.id === this.form.controls.jobRole.value) ?? null,
+  );
   protected readonly errorMessage = new FormControl<string | null>(null);
   protected readonly saving = new FormControl(false, { nonNullable: true });
   protected readonly deleting = new FormControl(false, { nonNullable: true });
@@ -56,6 +65,7 @@ export class ScheduleEntryDialogComponent {
       nonNullable: true,
       validators: Validators.required,
     }),
+    workArea: new FormControl(this.entry?.work_area ?? '', { nonNullable: true }),
     startsAt: new FormControl(this.entry ? timeFromDateTime(this.entry.starts_at) : '09:00', {
       nonNullable: true,
       validators: Validators.required,
@@ -91,6 +101,22 @@ export class ScheduleEntryDialogComponent {
     this.hideTimeSuggestions();
   }
 
+  protected employeeToString(employee: Employee | null | undefined): string {
+    return employee ? `${employee.first_name} ${employee.last_name}`.trim() : '';
+  }
+
+  protected jobRoleToString(jobRole: JobRole | null | undefined): string {
+    return jobRole?.name ?? '';
+  }
+
+  protected selectEmployee(employee: Employee | null | undefined): void {
+    if (employee) this.form.controls.employee.setValue(employee.id);
+  }
+
+  protected selectJobRole(jobRole: JobRole | null | undefined): void {
+    if (jobRole) this.form.controls.jobRole.setValue(jobRole.id);
+  }
+
   protected async save(): Promise<void> {
     if (this.form.invalid || this.saving.value) {
       this.form.markAllAsTouched();
@@ -108,7 +134,7 @@ export class ScheduleEntryDialogComponent {
       ends_at: datetimes.endsAt,
       job_role: value.jobRole,
       notes: value.notes.trim(),
-      work_area: this.entry?.work_area ?? null,
+      work_area: value.workArea || null,
     };
 
     try {

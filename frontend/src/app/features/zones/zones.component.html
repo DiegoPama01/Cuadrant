@@ -60,11 +60,10 @@
     </hlm-card>
   } @else {
     <div hlmTableContainer class="rounded-lg border bg-card">
-      <table hlmTable class="min-w-[760px]">
+        <table hlmTable class="min-w-[680px]">
         <thead hlmTableHeader>
           <tr hlmTableRow>
             <th hlmTableHead>Name</th>
-            <th hlmTableHead>Code</th>
             <th hlmTableHead>Description</th>
             <th hlmTableHead class="text-right">Actions</th>
           </tr>
@@ -85,7 +84,6 @@
                   <span>{{ workArea.name }}</span>
                 </div>
               </td>
-              <td hlmTableCell class="text-muted-foreground">{{ workArea.code || '—' }}</td>
               <td hlmTableCell class="text-muted-foreground">{{ workArea.description || '—' }}</td>
               <td hlmTableCell class="text-right">
                 <div class="flex justify-end gap-2">

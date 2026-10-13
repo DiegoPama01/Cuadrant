@@ -62,6 +62,40 @@ class ScheduleDomainTests(APITestCase):
         payload.update(overrides)
         return payload
 
+    def test_catalog_resources_do_not_expose_code(self):
+        resources = (
+            (
+                "job-roles",
+                {"installation": str(self.installation.id), "name": "Server", "color": "#2563eb", "active": True},
+            ),
+            (
+                "work-areas",
+                {"installation": str(self.installation.id), "name": "Patio", "color": "#16a34a", "active": True},
+            ),
+            (
+                "shift-templates",
+                {
+                    "name": "Day",
+                    "installation": str(self.installation.id),
+                    "color": "#f97316",
+                    "start_time": "08:00",
+                    "end_time": "16:00",
+                    "active": True,
+                },
+            ),
+        )
+
+        for resource, payload in resources:
+            with self.subTest(resource=resource):
+                response = self.client.post(
+                    f"/api/companies/{self.company.id}/installations/{self.installation.id}/{resource}/",
+                    payload,
+                    format="json",
+                )
+
+                self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+                self.assertNotIn("code", response.data)
+
     def test_schedule_entry_accepts_night_shift_without_template_or_work_area(self):
         serializer = self.serializer(self.schedule_payload())
 

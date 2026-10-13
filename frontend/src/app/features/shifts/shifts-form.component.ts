@@ -37,7 +37,6 @@ export class ShiftsFormComponent {
 
   protected readonly model = signal<ShiftTemplateUpsertPayload>({
     name: '',
-    code: '',
     description: '',
     start_time: '',
     end_time: '',

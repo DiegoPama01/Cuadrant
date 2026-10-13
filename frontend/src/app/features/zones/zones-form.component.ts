@@ -36,7 +36,6 @@ export class ZonesFormComponent {
   }
   protected readonly model = signal<WorkAreaUpsertPayload>({
     name: '',
-    code: '',
     description: '',
     color: randomFormColor(),
     active: true,

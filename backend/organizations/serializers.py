@@ -4,7 +4,6 @@ from organizations.models import Company, Installation
 
 class InstallationInputSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=150, required=False)
-    code = serializers.CharField(max_length=50, required=False, allow_blank=True, allow_null=True)
     address = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     timezone = serializers.CharField(max_length=64, required=False, allow_blank=True, allow_null=True)
     active = serializers.BooleanField(required=False, default=True)
@@ -37,7 +36,6 @@ class InstallationSerializer(serializers.ModelSerializer):
             "id",
             "company",
             "name",
-            "code",
             "address",
             "timezone",
             "active",

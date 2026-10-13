@@ -62,11 +62,10 @@
     </hlm-card>
   } @else {
     <div hlmTableContainer class="rounded-lg border bg-card">
-      <table hlmTable class="min-w-[760px]">
+        <table hlmTable class="min-w-[680px]">
         <thead hlmTableHeader>
           <tr hlmTableRow>
             <th hlmTableHead>Name</th>
-            <th hlmTableHead>Code</th>
             <th hlmTableHead>Hours</th>
             <th hlmTableHead class="text-right">Actions</th>
           </tr>
@@ -89,7 +88,6 @@
                   <span>{{ shiftTemplate.name }}</span>
                 </div>
               </td>
-              <td hlmTableCell class="text-muted-foreground">{{ shiftTemplate.code || '—' }}</td>
               <td hlmTableCell class="text-muted-foreground">
                 {{ shiftTemplate.start_time }} - {{ shiftTemplate.end_time }}
               </td>

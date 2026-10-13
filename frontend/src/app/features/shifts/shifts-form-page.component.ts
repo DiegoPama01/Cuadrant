@@ -50,7 +50,6 @@ export class ShiftsFormPageComponent {
     if (!shift) {
       return {
         name: '',
-        code: '',
         description: '',
         start_time: '',
         end_time: '',
@@ -62,7 +61,6 @@ export class ShiftsFormPageComponent {
 
     return {
       name: shift.name,
-      code: shift.code ?? '',
       description: shift.description ?? '',
       start_time: shift.start_time,
       end_time: shift.end_time,

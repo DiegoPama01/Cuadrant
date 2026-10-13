@@ -1,4 +1,4 @@
-<hlm-dialog-header>
+<hlm-dialog-header class="mb-6">
   <h2 hlmDialogTitle>{{ context.date }}</h2>
   <p hlmDialogDescription>{{ selectedEmployee()?.first_name }} {{ selectedEmployee()?.last_name }}</p>
 </hlm-dialog-header>
@@ -6,27 +6,46 @@
 <form class="grid gap-4" [formGroup]="form" (ngSubmit)="save()">
   <hlm-field>
     <label hlmFieldLabel for="entry-employee">Assigned to</label>
-    <select id="entry-employee" hlmInput formControlName="employee">
-      @for (employee of employees; track employee.id) {
-        <option [value]="employee.id">{{ employee.first_name }} {{ employee.last_name }}</option>
+    <hlm-combobox class="w-full" [value]="selectedEmployee() ?? null" [itemToString]="employeeToString" (valueChange)="selectEmployee($event)">
+      <hlm-combobox-input inputId="entry-employee" placeholder="Choose an employee" />
+      <hlm-combobox-content *hlmComboboxPortal>
+        <hlm-combobox-empty>No employees found.</hlm-combobox-empty>
+        <div hlmComboboxList>
+          @for (employee of employees; track employee.id) {
+            <hlm-combobox-item [value]="employee">{{ employeeToString(employee) }}</hlm-combobox-item>
+          }
+        </div>
+      </hlm-combobox-content>
+    </hlm-combobox>
+  </hlm-field>
+
+  <hlm-field>
+    <label hlmFieldLabel for="entry-role">Job role</label>
+    <hlm-combobox class="w-full" [value]="selectedJobRole()" [itemToString]="jobRoleToString" [disabled]="allowedJobRoles().length === 0" (valueChange)="selectJobRole($event)">
+      <hlm-combobox-input inputId="entry-role" placeholder="Choose a job role" />
+      <hlm-combobox-content *hlmComboboxPortal>
+        <hlm-combobox-empty>No job roles found.</hlm-combobox-empty>
+        <div hlmComboboxList>
+          @for (role of allowedJobRoles(); track role.id) {
+            <hlm-combobox-item [value]="role">{{ role.name }}</hlm-combobox-item>
+          }
+        </div>
+      </hlm-combobox-content>
+    </hlm-combobox>
+    @if (allowedJobRoles().length === 0) {
+      <p class="text-destructive text-xs">This employee has no job roles configured.</p>
+    }
+  </hlm-field>
+
+  <hlm-field>
+    <label hlmFieldLabel for="entry-work-area">Work area</label>
+    <select id="entry-work-area" hlmInput formControlName="workArea">
+      <option value="">No work area</option>
+      @for (workArea of workAreas; track workArea.id) {
+        <option [value]="workArea.id">{{ workArea.name }}</option>
       }
     </select>
   </hlm-field>
-
-  <div class="grid gap-4">
-    <hlm-field>
-      <label hlmFieldLabel for="entry-role">Job role</label>
-      <select id="entry-role" hlmInput formControlName="jobRole">
-        <option value="" disabled>Select a role</option>
-        @for (role of allowedJobRoles(); track role.id) {
-          <option [value]="role.id">{{ role.name }}</option>
-        }
-      </select>
-      @if (allowedJobRoles().length === 0) {
-        <p class="text-destructive text-xs">This employee has no job roles configured.</p>
-      }
-    </hlm-field>
-  </div>
 
   <div class="grid gap-4 sm:grid-cols-2">
     <hlm-field>
