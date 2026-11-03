@@ -1,0 +1,49 @@
+<hlm-dialog-header class="mb-6">
+  <h2 hlmDialogTitle>Move schedule entry</h2>
+  <p hlmDialogDescription>Choose the employee and day where this entry should appear.</p>
+</hlm-dialog-header>
+
+<form class="grid gap-5" (ngSubmit)="move()">
+  <hlm-field>
+    <label hlmFieldLabel for="move-entry-employee">Employee</label>
+    <hlm-select [value]="selectedEmployeeId()" [itemToString]="employeeIdToLabel" (valueChange)="setEmployee($event)">
+      <hlm-select-trigger id="move-entry-employee" class="w-full">
+        <hlm-select-value placeholder="Choose an employee" />
+      </hlm-select-trigger>
+      <hlm-select-content *hlmSelectPortal>
+        <hlm-select-group>
+          @for (employee of context.employees; track employee.id) {
+            <hlm-select-item [value]="employee.id">{{ employee.first_name }} {{ employee.last_name }}</hlm-select-item>
+          }
+        </hlm-select-group>
+      </hlm-select-content>
+    </hlm-select>
+  </hlm-field>
+
+  <hlm-field>
+    <label hlmFieldLabel for="move-entry-date">Day</label>
+    <hlm-select [value]="selectedDate()" [itemToString]="dateToLabel" (valueChange)="setDate($event)">
+      <hlm-select-trigger id="move-entry-date" class="w-full">
+        <hlm-select-value placeholder="Choose a day" />
+      </hlm-select-trigger>
+      <hlm-select-content *hlmSelectPortal>
+        <hlm-select-group>
+          @for (day of context.days; track day.date) {
+            <hlm-select-item [value]="day.date">{{ day.label }}</hlm-select-item>
+          }
+        </hlm-select-group>
+      </hlm-select-content>
+    </hlm-select>
+  </hlm-field>
+
+  @if (errorMessage(); as error) {
+    <p class="text-destructive text-sm" role="alert" aria-live="assertive">{{ error }}</p>
+  }
+
+  <hlm-dialog-footer class="flex-col-reverse gap-2 sm:flex-row sm:gap-0">
+    <button hlmBtn type="button" variant="outline" class="w-full sm:w-auto" hlmDialogClose [disabled]="saving()">Cancel</button>
+    <button hlmBtn type="submit" class="w-full sm:w-auto" [disabled]="saving() || destinationUnchanged()">
+      {{ saving() ? 'Moving…' : 'Move entry' }}
+    </button>
+  </hlm-dialog-footer>
+</form>

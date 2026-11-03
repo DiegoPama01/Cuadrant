@@ -20,6 +20,10 @@ import { JobRolesService } from '../job-roles/job-roles.service';
 import { WorkArea } from '../zones/zones.model';
 import { WorkAreasService } from '../zones/zones.service';
 import { localDate, localScheduleDatetimes, timeFromDateTime } from './schedule-entry-time';
+import {
+  MoveScheduleEntryDialogComponent,
+  MoveScheduleEntryDialogContext,
+} from './move-schedule-entry-dialog.component';
 import { ScheduleEntryDialogComponent } from './schedule-entry-dialog.component';
 import { buildScheduleEntriesCsv } from './schedule-entry-export';
 import { ScheduleEntriesService } from './schedule-entries.service';
@@ -220,6 +224,33 @@ export class PlanningComponent {
     this.openDialog(entry.employee, entry.date, entry);
   }
 
+  protected openMove(entry: ScheduleEntry): void {
+    const catalog = this.catalog();
+    if (!catalog) return;
+
+    const eligibleEmployees = catalog.employees.filter(
+      (employee) =>
+        employee.id === entry.employee ||
+        (employee.active && employee.job_roles.some((role) => role.job_role === entry.job_role)),
+    );
+    this.dialog.open<unknown, MoveScheduleEntryDialogContext>(MoveScheduleEntryDialogComponent, {
+      contentClass: 'w-[calc(100vw-2rem)] sm:max-w-lg',
+      context: {
+        entry,
+        employees: eligibleEmployees,
+        days: this.days().map((day) => ({
+          date: day.date,
+          label: `${day.weekday}, ${day.displayDate}`,
+        })),
+        onMove: async (destination) => {
+          const moved = await this.moveScheduleEntry(entry, destination);
+          if (moved) this.alerts.success('Schedule entry moved.');
+          return moved;
+        },
+      },
+    });
+  }
+
   protected roleName(id: string): string {
     return this.roleNames().get(id) ?? 'Job role';
   }
@@ -278,9 +309,9 @@ export class PlanningComponent {
     this.localChanges.set(entries.filter((entry) => entry.id !== id));
   }
 
-  private async moveScheduleEntry(entry: ScheduleEntry, destination: ScheduleCell): Promise<void> {
-    if (entry.employee === destination.employeeId && entry.date.slice(0, 10) === destination.date) return;
-    if (this.movingEntryIds().has(entry.id)) return;
+  private async moveScheduleEntry(entry: ScheduleEntry, destination: ScheduleCell): Promise<boolean> {
+    if (entry.employee === destination.employeeId && entry.date.slice(0, 10) === destination.date) return true;
+    if (this.movingEntryIds().has(entry.id)) return false;
 
     const destinationEmployee = this.catalog()?.employees.find(
       (employee) => employee.id === destination.employeeId,
@@ -289,7 +320,7 @@ export class PlanningComponent {
       this.alerts.error('Cannot move schedule entry', {
         description: 'The destination employee does not have the required job role.',
       });
-      return;
+      return false;
     }
 
     const datetimes = localScheduleDatetimes(
@@ -311,8 +342,10 @@ export class PlanningComponent {
         }),
       );
       this.upsertEntry(saved);
+      return true;
     } catch (error: unknown) {
       this.alerts.error('Could not move schedule entry', { description: apiErrorMessage(error) });
+      return false;
     } finally {
       this.movingEntryIds.update((ids) => {
         const next = new Set(ids);
