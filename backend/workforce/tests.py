@@ -66,17 +66,16 @@ class ScheduleDomainTests(APITestCase):
         resources = (
             (
                 "job-roles",
-                {"installation": str(self.installation.id), "name": "Server", "color": "#2563eb", "active": True},
+                {"name": "Server", "color": "#2563eb", "active": True},
             ),
             (
                 "work-areas",
-                {"installation": str(self.installation.id), "name": "Patio", "color": "#16a34a", "active": True},
+                {"name": "Patio", "color": "#16a34a", "active": True},
             ),
             (
                 "shift-templates",
                 {
                     "name": "Day",
-                    "installation": str(self.installation.id),
                     "color": "#f97316",
                     "start_time": "08:00",
                     "end_time": "16:00",
@@ -95,6 +94,7 @@ class ScheduleDomainTests(APITestCase):
 
                 self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
                 self.assertNotIn("code", response.data)
+                self.assertEqual(str(response.data["installation"]), str(self.installation.id))
 
     def test_schedule_entry_accepts_night_shift_without_template_or_work_area(self):
         serializer = self.serializer(self.schedule_payload())
@@ -152,6 +152,7 @@ class ScheduleDomainTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
         employee = Employee.objects.get(first_name="Maria")
+        self.assertEqual(str(response.data["installation"]), str(self.installation.id))
         self.assertTrue(EmployeeJobRole.objects.filter(employee=employee, job_role=self.job_role).exists())
         self.assertFalse(employee.contracts.exists())
 

@@ -9,6 +9,9 @@ services:
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
       POSTGRES_SSLMODE: disable
+      AUTHENTIK_ISSUER_URL: http://localhost:9000/application/o/cuadrant/
+      AUTHENTIK_INTERNAL_URL: http://host.docker.internal:9000
+      AUTHENTIK_SCOPES: openid profile email offline_access
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
@@ -21,6 +24,14 @@ services:
 
   frontend:
     container_name: cuadrant-frontend-local
+    build:
+      args:
+        FRONTEND_PUBLIC_API_BASE_URL: /api
+        FRONTEND_PUBLIC_AUTH_ISSUER_URL: http://localhost:9000/application/o/cuadrant/
+        FRONTEND_PUBLIC_AUTH_CLIENT_ID: ${AUTHENTIK_CLIENT_ID}
+        FRONTEND_PUBLIC_AUTH_REDIRECT_URI: http://localhost:4200/auth/callback
+        FRONTEND_PUBLIC_AUTH_POST_LOGOUT_REDIRECT_URI: http://localhost:4200/login
+        FRONTEND_PUBLIC_AUTH_SCOPES: openid profile email offline_access
     ports:
       - "4200:8080"
 

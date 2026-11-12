@@ -34,6 +34,13 @@ class InstallationScopedModelSerializer(serializers.ModelSerializer):
         installation = self.context.get("installation")
         if not installation:
             return
+        installation_field = self.fields.get("installation")
+        if installation_field is not None:
+            # DRF's generated UniqueTogetherValidator treats every field in a
+            # unique constraint as required, even when the field itself is
+            # declared required=False. Supply the URL-scoped installation so
+            # creates can omit it from the request body.
+            installation_field.default = installation
         for field_name in self.employee_fields:
             self.fields[field_name].queryset = Employee.objects.filter(installation=installation)
         for field_name in self.installation_fields:
@@ -108,6 +115,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
         super().__init__(*args, **kwargs)
         installation = self.context.get("installation")
         if installation:
+            self.fields["installation"].default = installation
             self.fields["installation"].queryset = Installation.objects.filter(pk=installation.pk)
             self.fields["job_roles"].child.fields["job_role"].queryset = JobRole.objects.filter(installation=installation)
 
