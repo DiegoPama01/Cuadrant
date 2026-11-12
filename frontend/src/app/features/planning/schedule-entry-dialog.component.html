@@ -1,9 +1,9 @@
 <hlm-dialog-header class="mb-6">
-  <h2 hlmDialogTitle>{{ context.date }}</h2>
-  <p hlmDialogDescription>{{ selectedEmployee()?.first_name }} {{ selectedEmployee()?.last_name }}</p>
+  <h2 hlmDialogTitle>{{ entry ? 'Edit schedule entry' : 'Add schedule entry' }}</h2>
+  <p hlmDialogDescription>{{ context.date }}<span aria-hidden="true"> · </span>{{ selectedEmployee()?.first_name }} {{ selectedEmployee()?.last_name }}</p>
 </hlm-dialog-header>
 
-<form class="grid gap-4" [formGroup]="form" (ngSubmit)="save()">
+<form class="grid gap-5" [formGroup]="form" (ngSubmit)="save()">
   <hlm-field>
     <label hlmFieldLabel for="entry-employee">Assigned to</label>
     <hlm-combobox class="w-full" [value]="selectedEmployee() ?? null" [itemToString]="employeeToString" (valueChange)="selectEmployee($event)">
@@ -39,12 +39,19 @@
 
   <hlm-field>
     <label hlmFieldLabel for="entry-work-area">Work area</label>
-    <select id="entry-work-area" hlmInput formControlName="workArea">
-      <option value="">No work area</option>
-      @for (workArea of workAreas; track workArea.id) {
-        <option [value]="workArea.id">{{ workArea.name }}</option>
-      }
-    </select>
+    <hlm-select [value]="form.controls.workArea.value" [itemToString]="workAreaIdToLabel" (valueChange)="form.controls.workArea.setValue($event ?? '')">
+      <hlm-select-trigger id="entry-work-area" class="w-full">
+        <hlm-select-value placeholder="Choose a work area" />
+      </hlm-select-trigger>
+      <hlm-select-content *hlmSelectPortal>
+        <hlm-select-group>
+          <hlm-select-item value="">No work area</hlm-select-item>
+          @for (workArea of workAreas; track workArea.id) {
+            <hlm-select-item [value]="workArea.id">{{ workArea.name }}</hlm-select-item>
+          }
+        </hlm-select-group>
+      </hlm-select-content>
+    </hlm-select>
   </hlm-field>
 
   <div class="grid gap-4 sm:grid-cols-2">
@@ -74,14 +81,14 @@
     <p class="text-destructive text-sm" role="alert" aria-live="assertive">{{ error }}</p>
   }
 
-  <hlm-dialog-footer>
+  <hlm-dialog-footer class="flex-col-reverse gap-2 sm:flex-row sm:gap-0">
     @if (entry) {
-      <button hlmBtn type="button" variant="destructive" class="sm:mr-auto" [disabled]="saving.value || deleting.value" (click)="delete()">
+      <button hlmBtn type="button" variant="destructive" class="w-full sm:mr-auto sm:w-auto" [disabled]="saving.value || deleting.value" (click)="delete()">
         {{ deleting.value ? 'Deleting…' : 'Delete' }}
       </button>
     }
-    <button hlmBtn type="button" variant="outline" hlmDialogClose [disabled]="saving.value || deleting.value">Cancel</button>
-    <button hlmBtn type="submit" [disabled]="saving.value || deleting.value || form.invalid">
+    <button hlmBtn type="button" variant="outline" class="w-full sm:w-auto" hlmDialogClose [disabled]="saving.value || deleting.value">Cancel</button>
+    <button hlmBtn type="submit" class="w-full sm:w-auto" [disabled]="saving.value || deleting.value || form.invalid">
       {{ saving.value ? 'Saving…' : 'Save' }}
     </button>
   </hlm-dialog-footer>

@@ -7,6 +7,7 @@ import { HlmComboboxImports } from '@spartan-ng/helm/combobox';
 import { HlmDialogImports } from '@spartan-ng/helm/dialog';
 import { HlmFieldImports } from '@spartan-ng/helm/field';
 import { HlmInputImports } from '@spartan-ng/helm/input';
+import { HlmSelectImports } from '@spartan-ng/helm/select';
 import { HlmTextareaImports } from '@spartan-ng/helm/textarea';
 import { firstValueFrom } from 'rxjs';
 import { Employee } from '../employees/employees.model';
@@ -30,7 +31,7 @@ export interface ScheduleEntryDialogContext {
 
 @Component({
   selector: 'app-schedule-entry-dialog',
-  imports: [NgTemplateOutlet, ReactiveFormsModule, HlmButtonImports, HlmComboboxImports, HlmDialogImports, HlmFieldImports, HlmInputImports, HlmTextareaImports],
+  imports: [NgTemplateOutlet, ReactiveFormsModule, HlmButtonImports, HlmComboboxImports, HlmDialogImports, HlmFieldImports, HlmInputImports, HlmSelectImports, HlmTextareaImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './schedule-entry-dialog.component.html',
 })
@@ -43,6 +44,8 @@ export class ScheduleEntryDialogComponent {
   protected readonly workAreas = this.context.workAreas.filter(
     (workArea) => workArea.active || workArea.id === this.entry?.work_area,
   );
+  protected readonly workAreaIdToLabel = (workAreaId: string | null): string =>
+    workAreaId ? this.workAreas.find((workArea) => workArea.id === workAreaId)?.name ?? '' : 'No work area';
   private readonly selectedEmployeeId = signal(this.context.employeeId);
   protected readonly selectedEmployee = computed(() =>
     this.employees.find((employee) => employee.id === this.selectedEmployeeId()),

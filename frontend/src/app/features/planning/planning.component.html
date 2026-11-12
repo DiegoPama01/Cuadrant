@@ -21,26 +21,41 @@
     </div>
   </div>
 
-  @if (!activeInstallationId() || catalogResource.isLoading() || entriesResource.isLoading()) {
-    <hlm-card><div hlmCardContent class="p-10 text-center">Loading schedule…</div></hlm-card>
+  @if (!activeInstallationId()) {
+    <hlm-card>
+      <div hlmCardContent class="flex min-h-48 items-center justify-center p-10 text-center">
+        <p class="text-muted-foreground">Select an installation to view its schedule.</p>
+      </div>
+    </hlm-card>
+  } @else if (catalogResource.isLoading() || entriesResource.isLoading()) {
+    <hlm-card>
+      <div hlmCardContent class="flex min-h-48 items-center justify-center p-10 text-center" role="status" aria-live="polite">
+        Loading schedule…
+      </div>
+    </hlm-card>
   } @else if (catalogResource.error() || entriesResource.error()) {
-    <hlm-card><div hlmCardContent class="flex flex-col items-center gap-3 p-10"><p>Could not load the schedule.</p><button hlmBtn variant="outline" (click)="reload()">Retry</button></div></hlm-card>
+    <hlm-card>
+      <div hlmCardContent class="flex min-h-48 flex-col items-center justify-center gap-3 p-10 text-center" role="alert">
+        <p>Could not load the schedule.</p>
+        <button hlmBtn type="button" variant="outline" (click)="reload()">Retry</button>
+      </div>
+    </hlm-card>
   } @else {
     <div hlmTableContainer class="rounded-xl border bg-card">
       <table hlmTable class="w-full min-w-[68rem] table-fixed">
         <caption class="sr-only">Weekly schedule by employee and day</caption>
         <thead hlmTableHeader>
           <tr hlmTableRow>
-            <th hlmTableHead class="sticky left-0 z-10 w-52 min-w-52 bg-card">Employee</th>
+            <th hlmTableHead scope="col" class="sticky left-0 z-10 w-52 min-w-52 bg-card">Employee</th>
             @for (day of days(); track day.date) {
-              <th hlmTableHead class="min-w-36 px-2 text-center"><strong>{{ day.weekday }}</strong><span class="text-muted-foreground block text-xs font-normal">{{ day.displayDate }}</span></th>
+              <th hlmTableHead scope="col" class="min-w-36 px-2 text-center"><strong>{{ day.weekday }}</strong><span class="text-muted-foreground block text-xs font-normal">{{ day.displayDate }}</span></th>
             }
           </tr>
         </thead>
         <tbody hlmTableBody cdkDropList [cdkDropListData]="employees()" [cdkDropListConnectedTo]="dropListIds()" [cdkDropListSortingDisabled]="true">
           @for (employee of employees(); track employee.id) {
             <tr hlmTableRow>
-              <th hlmTableCell class="sticky left-0 z-10 w-52 min-w-52 bg-card p-2 text-left align-top">
+              <th hlmTableCell scope="row" class="sticky left-0 z-10 w-52 min-w-52 bg-card p-2 text-left align-top">
                 <div
                   cdkDrag
                   [cdkDragData]="employee"
@@ -74,10 +89,11 @@
                         [timeRange]="timeRange(entry)"
                         [disabled]="isEntryMoving(entry.id)"
                         (edit)="openEdit($event)"
+                        (move)="openMove($event)"
                       />
                     }
                     @if (entriesFor(employee.id, day.date).length === 0) {
-                      <button hlmBtn type="button" variant="ghost" size="icon" class="self-center opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100" [attr.aria-label]="'Add schedule entry for ' + employee.first_name + ' ' + employee.last_name + ' on ' + day.date" (click)="openCreate(employee.id, day.date)">
+                      <button hlmBtn type="button" variant="ghost" size="icon" class="self-center opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 focus-visible:opacity-100" [attr.aria-label]="'Add schedule entry for ' + employee.first_name + ' ' + employee.last_name + ' on ' + day.date" (click)="openCreate(employee.id, day.date)">
                         <ng-icon name="lucidePlus" />
                       </button>
                     }
@@ -86,7 +102,15 @@
               }
             </tr>
           } @empty {
-            <tr hlmTableRow><td hlmTableCell colspan="8" class="p-10 text-center text-muted-foreground">No active employees match this search.</td></tr>
+            <tr hlmTableRow>
+              <td hlmTableCell colspan="8" class="p-10 text-center text-muted-foreground" role="status" aria-live="polite">
+                @if (employeeSearch().trim()) {
+                  No active employees match “{{ employeeSearch().trim() }}”. Try another search.
+                } @else {
+                  No active employees are available for this installation.
+                }
+              </td>
+            </tr>
           }
         </tbody>
       </table>
